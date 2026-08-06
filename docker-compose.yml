@@ -1,0 +1,58 @@
+# Local smoke test only: confirms the gateway routes correctly to each service.
+# Uses SQLite per service here purely to avoid spinning up 4 Postgres instances just to test
+# routing — the Railway deployment (see README.md) uses each service's real Postgres, as
+# documented in that service's own repo.
+services:
+  gateway:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    environment:
+      EXPENSES_UPSTREAM: expenses-api:8000
+      SUPPORT_UPSTREAM: support-api:8000
+      STORAGE_UPSTREAM: storage-api:8000
+      BILLING_UPSTREAM: billing-api:8000
+    volumes:
+      - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./landing:/usr/share/nginx/html:ro
+    depends_on:
+      - expenses-api
+      - support-api
+      - storage-api
+      - billing-api
+
+  expenses-api:
+    build: ../PortafolioGithub/APIautomatizacionAI
+    environment:
+      DATABASE_URL: sqlite:////tmp/expenses.db
+      ANTHROPIC_API_KEY: test
+
+  support-api:
+    build: ../PortafolioGithub/BotAutomatizacionDiaria
+    environment:
+      DATABASE_URL: sqlite:////tmp/support.db
+      ANTHROPIC_API_KEY: test
+      WEBHOOK_SECRET: test
+
+  storage-api:
+    build: ../PortafolioGithub/AlmacenamientoCDN
+    environment:
+      DATABASE_URL: sqlite:////tmp/storage.db
+      API_KEY: test
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      S3_BUCKET_NAME: test
+      CLOUDFRONT_DOMAIN: test.cloudfront.net
+      CLOUDFRONT_KEY_PAIR_ID: test
+      CLOUDFRONT_PRIVATE_KEY: test
+
+  billing-api:
+    build: ../PortafolioGithub/PasarelaPagoFacturacion
+    environment:
+      DATABASE_URL: sqlite:////tmp/billing.db
+      API_KEY: test
+      STRIPE_SECRET_KEY: sk_test_x
+      STRIPE_WEBHOOK_SECRET: whsec_test
+      CHECKOUT_SUCCESS_URL: http://localhost:8080/billing/checkout-success
+      CHECKOUT_CANCEL_URL: http://localhost:8080/billing/checkout-cancelled
