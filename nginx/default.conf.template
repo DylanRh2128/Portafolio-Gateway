@@ -3,32 +3,25 @@ server {
 
     root /usr/share/nginx/html;
     index index.html;
+    proxy_set_header Host $host;
 
     location / {
         try_files $uri $uri/ =404;
     }
 
     location /expenses/ {
-        rewrite ^/expenses/(.*)$ /$1 break;
-        proxy_pass http://${EXPENSES_UPSTREAM};
-        proxy_set_header Host $host;
+        proxy_pass http://${EXPENSES_UPSTREAM}/;
     }
 
     location /support/ {
-        rewrite ^/support/(.*)$ /$1 break;
-        proxy_pass http://${SUPPORT_UPSTREAM};
-        proxy_set_header Host $host;
+        proxy_pass http://${SUPPORT_UPSTREAM}/;
     }
 
     location /storage/ {
-        rewrite ^/storage/(.*)$ /$1 break;
-        proxy_pass http://${STORAGE_UPSTREAM};
-        proxy_set_header Host $host;
+        proxy_pass http://${STORAGE_UPSTREAM}/;
     }
 
     location /billing/ {
-        rewrite ^/billing/(.*)$ /$1 break;
-        proxy_pass http://${BILLING_UPSTREAM};
-        proxy_set_header Host $host;
+        proxy_pass http://${BILLING_UPSTREAM}/;
     }
 }
