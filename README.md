@@ -1,11 +1,14 @@
 # Portfolio Gateway
 
 A single public entry point for a backend portfolio made of independent projects. Each project
-(`APIautomatizacionAI`, `BotAutomatizacionDiaria`, `AlmacenamientoCDN`, `PasarelaPagoFacturacion`)
+([`APIAutomatizacionAI`](https://github.com/DylanRh2128/APIAutomatizacionAI),
+[`BotAutomatizacionDiaria`](https://github.com/DylanRh2128/BotAutomatizacionDiaria),
+[`AlmacenamientoCDN`](https://github.com/DylanRh2128/AlmacenamientoCDN),
+[`PasarelaPagoFacturacion`](https://github.com/DylanRh2128/PasarelaPagoFacturacion))
 is its own repo, with its own tests, docs, and Docker setup — this repo doesn't change any of
 that. It just puts an nginx reverse proxy in front of all four, routing by path, plus a small
-landing page linking to each project (and to `SistemaFacturacion`, a desktop app that can't be
-proxied this way).
+landing page linking to each project (and to the portfolio version of `SistemaFacturacion`, a
+desktop app that can't be proxied this way).
 
 **This is a reverse proxy, not a microservices architecture** — the four backends don't call
 each other. The gateway exists purely so a visitor gets one URL instead of four.
@@ -15,7 +18,7 @@ each other. The gateway exists purely so a visitor gets one URL instead of four.
 | Path | Project |
 |---|---|
 | `/` | landing page |
-| `/expenses/*` | APIautomatizacionAI |
+| `/expenses/*` | APIAutomatizacionAI |
 | `/support/*` | BotAutomatizacionDiaria |
 | `/storage/*` | AlmacenamientoCDN |
 | `/billing/*` | PasarelaPagoFacturacion |
@@ -26,8 +29,14 @@ projects had to change.
 
 ## Run it locally
 
-Requires the four project repos cloned as sibling folders under `PortafolioGithub/`, exactly as
-laid out on this machine (`../PortafolioGithub/APIautomatizacionAI`, etc.).
+Clone this repo and the four project repos side by side:
+
+```bash
+for r in Portafolio-Gateway APIAutomatizacionAI BotAutomatizacionDiaria AlmacenamientoCDN PasarelaPagoFacturacion; do
+  git clone https://github.com/DylanRh2128/$r.git
+done
+cd Portafolio-Gateway
+```
 
 ```bash
 docker compose up --build
@@ -63,8 +72,10 @@ This is a manual, one-time setup done in Railway's dashboard — nothing here au
    STORAGE_UPSTREAM=<storage-service-name>.railway.internal:8000
    BILLING_UPSTREAM=<billing-service-name>.railway.internal:8000
    ```
-5. Generate/attach a public domain **only on the gateway service** — the 4 backends stay
-   internal-only, reachable exclusively through the gateway.
+5. Generate/attach a public domain **only on the gateway service** (target port `80`; it builds
+   from this repo's `Dockerfile`) — the 4 backends stay internal-only, reachable exclusively
+   through the gateway. The expenses and support APIs need an `X-API-Key` header, so their
+   `/docs` pages load publicly but calls only work for whoever holds the key.
 6. Once the domain is live, update:
    - The Stripe Dashboard's webhook endpoint URL to `https://<your-domain>/billing/webhooks/stripe`.
    - The n8n workflow's HTTP Request node to `https://<your-domain>/support/tickets/from-email`.

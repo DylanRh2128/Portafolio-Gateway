@@ -4,7 +4,7 @@
 # documented in that service's own repo.
 services:
   gateway:
-    image: nginx:1.27-alpine
+    build: .
     ports:
       - "8080:80"
     environment:
@@ -12,9 +12,6 @@ services:
       SUPPORT_UPSTREAM: support-api:8000
       STORAGE_UPSTREAM: storage-api:8000
       BILLING_UPSTREAM: billing-api:8000
-    volumes:
-      - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
-      - ./landing:/usr/share/nginx/html:ro
     depends_on:
       - expenses-api
       - support-api
@@ -22,20 +19,22 @@ services:
       - billing-api
 
   expenses-api:
-    build: ../PortafolioGithub/APIautomatizacionAI
+    build: ../APIAutomatizacionAI
     environment:
       DATABASE_URL: sqlite:////tmp/expenses.db
       ANTHROPIC_API_KEY: test
+      API_KEY: test
 
   support-api:
-    build: ../PortafolioGithub/BotAutomatizacionDiaria
+    build: ../BotAutomatizacionDiaria
     environment:
       DATABASE_URL: sqlite:////tmp/support.db
       ANTHROPIC_API_KEY: test
       WEBHOOK_SECRET: test
+      API_KEY: test
 
   storage-api:
-    build: ../PortafolioGithub/AlmacenamientoCDN
+    build: ../AlmacenamientoCDN
     environment:
       DATABASE_URL: sqlite:////tmp/storage.db
       API_KEY: test
@@ -48,7 +47,7 @@ services:
       CLOUDFRONT_PRIVATE_KEY: test
 
   billing-api:
-    build: ../PortafolioGithub/PasarelaPagoFacturacion
+    build: ../PasarelaPagoFacturacion
     environment:
       DATABASE_URL: sqlite:////tmp/billing.db
       API_KEY: test

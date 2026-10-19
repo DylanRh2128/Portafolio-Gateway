@@ -4,6 +4,8 @@ server {
     root /usr/share/nginx/html;
     index index.html;
     proxy_set_header Host $host;
+    # AlmacenamientoCDN accepts files up to 10 MB; nginx's 1 MB default would reject them first.
+    client_max_body_size 11m;
 
     location / {
         try_files $uri $uri/ =404;
