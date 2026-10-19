@@ -1,7 +1,6 @@
 # Local smoke test only: confirms the gateway routes correctly to each service.
 # Uses SQLite per service here purely to avoid spinning up 4 Postgres instances just to test
-# routing — the Railway deployment (see README.md) uses each service's real Postgres, as
-# documented in that service's own repo.
+# routing — the VPS deployment (docker-compose.vps.yml) uses a real Postgres.
 services:
   gateway:
     build: .
@@ -21,6 +20,7 @@ services:
   expenses-api:
     build: ../APIAutomatizacionAI
     environment:
+      UVICORN_ROOT_PATH: /expenses  # so /docs fetches /expenses/openapi.json
       DATABASE_URL: sqlite:////tmp/expenses.db
       ANTHROPIC_API_KEY: test
       API_KEY: test
@@ -28,6 +28,7 @@ services:
   support-api:
     build: ../BotAutomatizacionDiaria
     environment:
+      UVICORN_ROOT_PATH: /support  # so /docs fetches /support/openapi.json
       DATABASE_URL: sqlite:////tmp/support.db
       ANTHROPIC_API_KEY: test
       WEBHOOK_SECRET: test
@@ -36,6 +37,7 @@ services:
   storage-api:
     build: ../AlmacenamientoCDN
     environment:
+      UVICORN_ROOT_PATH: /storage  # so /docs fetches /storage/openapi.json
       DATABASE_URL: sqlite:////tmp/storage.db
       API_KEY: test
       AWS_ACCESS_KEY_ID: test
@@ -49,6 +51,7 @@ services:
   billing-api:
     build: ../PasarelaPagoFacturacion
     environment:
+      UVICORN_ROOT_PATH: /billing  # so /docs fetches /billing/openapi.json
       DATABASE_URL: sqlite:////tmp/billing.db
       API_KEY: test
       STRIPE_SECRET_KEY: sk_test_x

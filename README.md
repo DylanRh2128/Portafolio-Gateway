@@ -52,36 +52,41 @@ curl http://localhost:8080/storage/health
 curl http://localhost:8080/billing/health
 ```
 
-## Deploying for real (Railway)
+## Deploying for real (single VPS)
 
-This is a manual, one-time setup done in Railway's dashboard — nothing here automates it.
+[`docker-compose.vps.yml`](docker-compose.vps.yml) runs everything on one Linux server with
+Docker: a single Postgres with one database per project (created by
+[`vps/init-dbs.sql`](vps/init-dbs.sql)), the four APIs on Docker's internal network only, and the
+gateway on `127.0.0.1:8120`. The host's own nginx terminates TLS and proxies to it, so the
+backends are never reachable except through the gateway.
 
-1. Create a Railway account and a new **Project**.
-2. Add each of the 4 backend repos as its own **Service** in that project (`New Service` →
-   `GitHub Repo`), plus a **PostgreSQL** addon for each — Railway gives every service and addon
-   a private hostname reachable by the others inside the same project (`<service>.railway.internal`).
-3. On each service, set the environment variables from that project's own `.env.example`
-   (`DATABASE_URL` from the Postgres addon Railway just created, `ANTHROPIC_API_KEY`, and
-   whichever service-specific ones apply — `WEBHOOK_SECRET`, the AWS/CloudFront vars, or the
-   Stripe vars).
-4. Add **this repo** (`portfolio-gateway`) as a 5th service. Set its environment variables to
-   each backend's private Railway hostname:
-   ```
-   EXPENSES_UPSTREAM=<expenses-service-name>.railway.internal:8000
-   SUPPORT_UPSTREAM=<support-service-name>.railway.internal:8000
-   STORAGE_UPSTREAM=<storage-service-name>.railway.internal:8000
-   BILLING_UPSTREAM=<billing-service-name>.railway.internal:8000
-   ```
-5. Generate/attach a public domain **only on the gateway service** (target port `80`; it builds
-   from this repo's `Dockerfile`) — the 4 backends stay internal-only, reachable exclusively
-   through the gateway. The expenses and support APIs need an `X-API-Key` header, so their
-   `/docs` pages load publicly but calls only work for whoever holds the key.
-6. Once the domain is live, update:
-   - The Stripe Dashboard's webhook endpoint URL to `https://<your-domain>/billing/webhooks/stripe`.
-   - The n8n workflow's HTTP Request node to `https://<your-domain>/support/tickets/from-email`.
+```bash
+mkdir -p /opt/portafolio && cd /opt/portafolio
+for r in Portafolio-Gateway APIAutomatizacionAI BotAutomatizacionDiaria AlmacenamientoCDN PasarelaPagoFacturacion; do
+  git clone https://github.com/DylanRh2128/$r.git
+done
+cd Portafolio-Gateway
+cp vps/env.ejemplo .env        # fill it in; random values: openssl rand -hex 32
+docker compose -f docker-compose.vps.yml up -d --build
+
+cp vps/nginx-host.conf /etc/nginx/sites-enabled/portafolio.conf   # set server_name first
+nginx -t && systemctl reload nginx && certbot --nginx -d <server_name>
+```
+
+To update after pushing changes: `git pull` in each repo, then the same `up -d --build`.
+
+Notes:
+- Each API runs with `UVICORN_ROOT_PATH=/<prefix>` so its `/docs` page loads
+  `/<prefix>/openapi.json` through the gateway instead of the landing page's `/openapi.json`.
+- `API_KEY` protects every read endpoint and the expenses upload; `/docs` stays public but calls
+  only work for whoever holds the key.
+- Stripe and AWS values are optional: without them `/billing` and `/storage` still start and serve
+  their docs, but real payments and uploads fail.
+- Once the domain is live, point the Stripe webhook at `https://<domain>/billing/webhooks/stripe`
+  and the n8n HTTP Request node at `https://<domain>/support/tickets/from-email`.
 
 ## Why no Kubernetes here either
 
-Four small services behind one reverse proxy is still well within what Docker Compose / a
-single Railway project handles fine. Kubernetes would add an orchestration layer this portfolio
+Four small services behind one reverse proxy is still well within what Docker Compose on a
+single VPS handles fine. Kubernetes would add an orchestration layer this portfolio
 has no scaling problem that needs solving.

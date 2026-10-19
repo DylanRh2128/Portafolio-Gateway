@@ -7,23 +7,35 @@ server {
     # AlmacenamientoCDN accepts files up to 10 MB; nginx's 1 MB default would reject them first.
     client_max_body_size 11m;
 
+    # Docker's DNS. Upstreams go through variables so nginx re-resolves them: otherwise it keeps
+    # the IPs from startup and, once a backend is recreated, sends traffic to the wrong container.
+    resolver 127.0.0.11 valid=10s;
+
     location / {
         try_files $uri $uri/ =404;
     }
 
     location /expenses/ {
-        proxy_pass http://${EXPENSES_UPSTREAM}/;
+        set $expenses ${EXPENSES_UPSTREAM};
+        rewrite ^/expenses/(.*)$ /$1 break;
+        proxy_pass http://$expenses;
     }
 
     location /support/ {
-        proxy_pass http://${SUPPORT_UPSTREAM}/;
+        set $support ${SUPPORT_UPSTREAM};
+        rewrite ^/support/(.*)$ /$1 break;
+        proxy_pass http://$support;
     }
 
     location /storage/ {
-        proxy_pass http://${STORAGE_UPSTREAM}/;
+        set $storage ${STORAGE_UPSTREAM};
+        rewrite ^/storage/(.*)$ /$1 break;
+        proxy_pass http://$storage;
     }
 
     location /billing/ {
-        proxy_pass http://${BILLING_UPSTREAM}/;
+        set $billing ${BILLING_UPSTREAM};
+        rewrite ^/billing/(.*)$ /$1 break;
+        proxy_pass http://$billing;
     }
 }
