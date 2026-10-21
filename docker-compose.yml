@@ -11,6 +11,9 @@ services:
       SUPPORT_UPSTREAM: support-api:8000
       STORAGE_UPSTREAM: storage-api:8000
       BILLING_UPSTREAM: billing-api:8000
+      # Injected by nginx on the /demo/* routes only; never sent to the browser.
+      DEMO_API_KEY: test
+      DEMO_WEBHOOK_SECRET: test
     depends_on:
       - expenses-api
       - support-api

@@ -1,3 +1,9 @@
+# Public demo: visitors try each API from the landing page without ever seeing a key. nginx adds
+# the key server-side on a handful of fixed routes, rate-limited per IP so nobody can drain the
+# OpenAI credits or fill the bucket.
+limit_req_zone $binary_remote_addr zone=demo:10m rate=10r/m;
+limit_req_status 429;
+
 server {
     listen 80;
 
@@ -13,6 +19,41 @@ server {
 
     location / {
         try_files $uri $uri/ =404;
+    }
+
+    location = /demo/expenses/reports {
+        limit_except POST { deny all; }
+        limit_req zone=demo burst=10 nodelay;
+        client_max_body_size 100k;
+        set $expenses ${EXPENSES_UPSTREAM};
+        proxy_set_header X-API-Key ${DEMO_API_KEY};
+        proxy_pass http://$expenses/reports;
+    }
+
+    location = /demo/support/classify {
+        limit_except POST { deny all; }
+        limit_req zone=demo burst=10 nodelay;
+        client_max_body_size 20k;
+        set $support ${SUPPORT_UPSTREAM};
+        proxy_set_header X-Webhook-Secret ${DEMO_WEBHOOK_SECRET};
+        proxy_pass http://$support/tickets/from-email;
+    }
+
+    location = /demo/storage/files {
+        limit_except POST { deny all; }
+        limit_req zone=demo burst=10 nodelay;
+        client_max_body_size 2m;
+        set $storage ${STORAGE_UPSTREAM};
+        proxy_set_header X-API-Key ${DEMO_API_KEY};
+        proxy_pass http://$storage/files;
+    }
+
+    location ~ ^/demo/storage/files/(\d+)/download-url$ {
+        limit_except GET { deny all; }
+        limit_req zone=demo burst=10 nodelay;
+        set $storage ${STORAGE_UPSTREAM};
+        proxy_set_header X-API-Key ${DEMO_API_KEY};
+        proxy_pass http://$storage/files/$1/download-url;
     }
 
     location /expenses/ {
