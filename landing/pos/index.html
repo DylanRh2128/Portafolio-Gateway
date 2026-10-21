@@ -15,19 +15,19 @@
 </head>
 <body>
 <div class="wrap">
-  <a class="back" href="/">← All projects</a>
-  <h1>QuickBite POS — Restaurant Billing System</h1>
-  <p class="lead">A desktop point-of-sale built for a real fast-food restaurant (shown here with its brand removed). It replaced a system whose credentials had left with former staff, and it works offline: billing can't stop because the internet did. Designed so a new cashier can take an order without training — a visual menu instead of codes.</p>
+  <a class="back" href="/" data-i18n="back">← All projects</a>
+  <h1 data-i18n="h1">QuickBite POS — Restaurant Billing System</h1>
+  <p class="lead" data-i18n="lead">A desktop point-of-sale built for a real fast-food restaurant (shown here with its brand removed). It replaced a system whose credentials had left with former staff, and it works offline: billing can't stop because the internet did. Designed so a new cashier can take an order without training — a visual menu instead of codes.</p>
   <div class="stack">.NET 8 · Blazor Hybrid (WPF + BlazorWebView) · Entity Framework Core · PostgreSQL · xUnit · GitHub Actions</div>
   <div class="links">
-    <a href="https://github.com/DylanRh2128/SistemaFacturacion/tree/37faba4">Source on GitHub (portfolio version)</a>
-    <a href="/pos/prototype/" target="_blank" rel="noopener">Open the prototype full screen</a>
+    <a href="https://github.com/DylanRh2128/SistemaFacturacion/tree/37faba4" data-i18n="repo">Source on GitHub (portfolio version)</a>
+    <a href="/pos/prototype/" target="_blank" rel="noopener" data-i18n="full">Open the prototype full screen</a>
   </div>
 
   <div class="layout" style="margin-bottom:16px">
     <section class="panel">
-      <span class="label">What it does</span>
-      <ul class="features">
+      <span class="label" data-i18n="what">What it does</span>
+      <ul class="features" data-i18n="features">
         <li>Visual menu with photos, search by name or price, add-ons per product.</li>
         <li>Dine-in, take-away and delivery orders in a single screen.</li>
         <li>Delivery cost computed from the customer's street, using zones the admin configures (with overlap warnings).</li>
@@ -39,22 +39,53 @@
       </ul>
     </section>
     <section class="panel">
-      <span class="label">Architecture</span>
-      <div class="layers">
+      <span class="label" data-i18n="arch">Architecture</span>
+      <div class="layers" data-i18n="layers">
         <div><b>Facturacion.Desktop</b> — WPF window hosting BlazorWebView, the .exe and DI setup</div>
         <div><b>Facturacion.UI</b> — Razor screens and shared components, no business logic</div>
         <div><b>Facturacion.Core</b> — pure business rules (delivery zones, change, operating day), no UI or SQL</div>
         <div><b>Facturacion.Data</b> — EF Core + PostgreSQL repositories implementing Core's interfaces</div>
       </div>
-      <p class="hint" style="margin:0">Dependencies only point down, so the rules most likely to cost money — delivery pricing, change, close-out — are unit-tested in isolation with in-memory fakes, and run in CI on every push.</p>
+      <p class="hint" style="margin:0" data-i18n="archNote">Dependencies only point down, so the rules most likely to cost money — delivery pricing, change, close-out — are unit-tested in isolation with in-memory fakes, and run in CI on every push.</p>
     </section>
   </div>
 
   <section class="panel">
-    <span class="label">Try the clickable prototype</span>
-    <p class="hint" style="margin:0">The HTML prototype built before development to agree on the flow: press <i>Ingresar</i>, add products, switch delivery type and charge an order. The real app is a Windows desktop program, so it can't run in a browser — this is the closest thing to it.</p>
+    <span class="label" data-i18n="try">Try the clickable prototype</span>
+    <p class="hint" style="margin:0" data-i18n="tryNote">The HTML prototype built before development to agree on the flow: press <i>Ingresar</i>, add products, switch delivery type and charge an order. The real app is a Windows desktop program, so it can't run in a browser — this is the closest thing to it. The prototype itself is in Spanish, as the restaurant uses it.</p>
     <iframe class="frame" src="/pos/prototype/" title="QuickBite POS prototype" loading="lazy"></iframe>
   </section>
 </div>
+
+<script src="/assets/demo.js"></script>
+<script>
+i18n({
+  en: {},
+  es: {
+    title: "QuickBite POS",
+    h1: "QuickBite POS — Sistema de facturación para restaurante",
+    lead: "Un punto de venta de escritorio construido para un restaurante de comida rápida real (aquí sin su marca). Reemplazó un sistema cuyas credenciales se habían ido con antiguos empleados, y funciona sin internet: la facturación no puede detenerse porque se cayó la conexión. Pensado para que un cajero nuevo tome un pedido sin capacitación — un menú visual en lugar de códigos.",
+    repo: "Código en GitHub (versión de portafolio)",
+    full: "Abrir el prototipo en pantalla completa",
+    what: "Qué hace",
+    features: `<li>Menú visual con fotos, búsqueda por nombre o precio y adiciones por producto.</li>
+      <li>Pedidos para mesa, para llevar y domicilio en una sola pantalla.</li>
+      <li>Costo de domicilio calculado según la calle del cliente, con zonas que configura el administrador (y aviso si se solapan).</li>
+      <li>Clientes recurrentes por nombre o teléfono, con la dirección ya cargada.</li>
+      <li>Cálculo de vueltas en efectivo, o comprobante de transferencia pegado con Ctrl+V.</li>
+      <li>Cuadre de caja por <i>día operativo</i> — los turnos que cruzan la medianoche cuentan como un solo día.</li>
+      <li>Reportes de ventas por día, mes y año; historial de cierres para el cierre de mes.</li>
+      <li>Tickets en impresora térmica; roles de cajero y administrador.</li>`,
+    arch: "Arquitectura",
+    layers: `<div><b>Facturacion.Desktop</b> — ventana WPF que aloja el BlazorWebView, el .exe y la inyección de dependencias</div>
+      <div><b>Facturacion.UI</b> — pantallas Razor y componentes compartidos, sin lógica de negocio</div>
+      <div><b>Facturacion.Core</b> — reglas de negocio puras (zonas de domicilio, vueltas, día operativo), sin UI ni SQL</div>
+      <div><b>Facturacion.Data</b> — repositorios EF Core + PostgreSQL que implementan las interfaces de Core</div>`,
+    archNote: "Las dependencias solo apuntan hacia abajo, así que las reglas que más dinero pueden costar — precio del domicilio, vueltas, cuadre — tienen pruebas unitarias aisladas con repositorios en memoria, y corren en CI en cada push.",
+    try: "Prueba el prototipo navegable",
+    tryNote: "El prototipo HTML construido antes del desarrollo para acordar el flujo: presiona <i>Ingresar</i>, agrega productos, cambia el tipo de entrega y cobra un pedido. La app real es un programa de escritorio para Windows, así que no corre en el navegador — esto es lo más cercano.",
+  },
+});
+</script>
 </body>
 </html>

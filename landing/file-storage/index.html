@@ -8,84 +8,118 @@
 </head>
 <body>
 <div class="wrap">
-  <a class="back" href="/">← All projects</a>
-  <h1>Private File Storage API</h1>
-  <p class="lead">Files are validated (type and magic bytes), stored in a private S3 bucket nobody can read directly, and served only through CloudFront URLs signed with an RSA key and valid for 10 minutes. Upload something and compare the signed link with the same link without its signature.</p>
+  <a class="back" href="/" data-i18n="back">← All projects</a>
+  <h1 data-i18n="h1">Private File Storage API</h1>
+  <p class="lead" data-i18n="lead">Files are validated (type and magic bytes), stored in a private S3 bucket nobody can read directly, and served only through CloudFront URLs signed with an RSA key and valid for 10 minutes. Upload something and compare the signed link with the same link without its signature.</p>
   <div class="stack">FastAPI · PostgreSQL · AWS S3 + CloudFront (signed URLs, Origin Access Control)</div>
   <div class="links">
-    <a href="/storage/docs">API docs (Swagger)</a>
-    <a href="https://github.com/DylanRh2128/AlmacenamientoCDN">Source on GitHub</a>
+    <a href="/storage/docs" data-i18n="docs">API docs (Swagger)</a>
+    <a href="https://github.com/DylanRh2128/AlmacenamientoCDN" data-i18n="source">Source on GitHub</a>
   </div>
 
-  <div class="flow"><span>Upload</span><i>→</i><span>Type + magic-byte check</span><i>→</i><span>Private S3 bucket</span><i>→</i><span>RSA-signed CloudFront URL</span><i>→</i><span>Expires in 10 min</span></div>
+  <div class="flow" data-i18n="flow"><span>Upload</span><i>→</i><span>Type + magic-byte check</span><i>→</i><span>Private S3 bucket</span><i>→</i><span>RSA-signed CloudFront URL</span><i>→</i><span>Expires in 10 min</span></div>
 
   <div class="layout">
     <form class="panel" id="form">
-      <span class="label">Upload</span>
+      <span class="label" data-i18n="upload">Upload</span>
       <label class="drop" id="drop">
         <input type="file" name="file" accept="image/png,image/jpeg,application/pdf" hidden />
-        <b>Drop a PNG, JPG or PDF here</b><br />or click to choose one (max 2 MB in this demo)
+        <span data-i18n="drop"><b>Drop a PNG, JPG or PDF here</b><br />or click to choose one (max 2 MB in this demo)</span>
       </label>
-      <button type="button" class="secondary" id="sample">Use a generated sample image</button>
+      <button type="button" class="secondary" id="sample" data-i18n="sample">Use a generated sample image</button>
     </form>
 
     <section class="panel" id="out">
-      <span class="label">Result</span>
-      <p class="placeholder">Upload a file to get its signed URL.</p>
+      <span class="label" data-i18n="result">Result</span>
+      <p class="placeholder" data-i18n="empty">Upload a file to get its signed URL.</p>
     </section>
   </div>
 </div>
 
 <script src="/assets/demo.js"></script>
 <script>
+i18n({
+  en: {
+    uploading: "Uploading", stored: "Stored", asFile: "as file", withSig: "With signature", noSig: "Same URL, no signature",
+    expiresIn: "Expires in", expired: "expired — the link no longer works", openYourself: "Open it yourself",
+    refused: "403 — CloudFront refused it<br>(no valid signature)", openPdf: "Open the PDF",
+    inside: "What's in the signed URL", param: "Parameter", value: "Value",
+    keyPair: "public key CloudFront verifies with", sigDesc: "(RSA-SHA1 of the policy)",
+    sampleText: "Signed CloudFront download", sampleSub: "Uploaded",
+  },
+  es: {
+    title: "Demo de almacenamiento de archivos",
+    h1: "API de almacenamiento privado de archivos",
+    lead: "Los archivos se validan (tipo y bytes mágicos), se guardan en un bucket S3 privado que nadie puede leer directamente y solo se sirven por URLs de CloudFront firmadas con una llave RSA y válidas por 10 minutos. Sube algo y compara el enlace firmado con el mismo enlace sin su firma.",
+    flow: "<span>Carga</span><i>→</i><span>Validación de tipo y bytes mágicos</span><i>→</i><span>Bucket S3 privado</span><i>→</i><span>URL de CloudFront firmada con RSA</span><i>→</i><span>Vence en 10 min</span>",
+    upload: "Subir",
+    drop: "<b>Suelta aquí un PNG, JPG o PDF</b><br />o haz clic para elegir uno (máx. 2 MB en esta demo)",
+    sample: "Usar una imagen de ejemplo generada",
+    result: "Resultado",
+    empty: "Sube un archivo para obtener su URL firmada.",
+    uploading: "Subiendo", stored: "Guardado", asFile: "como archivo", withSig: "Con firma", noSig: "La misma URL, sin firma",
+    expiresIn: "Vence en", expired: "vencida — el enlace ya no funciona", openYourself: "Ábrelo tú mismo",
+    refused: "403 — CloudFront lo rechazó<br>(sin firma válida)", openPdf: "Abrir el PDF",
+    inside: "Qué lleva la URL firmada", param: "Parámetro", value: "Valor",
+    keyPair: "llave pública con la que CloudFront verifica", sigDesc: "(RSA-SHA1 de la política)",
+    sampleText: "Descarga firmada de CloudFront", sampleSub: "Subida el",
+  },
+});
+
 const form = document.getElementById("form");
 const out = document.getElementById("out");
 const drop = document.getElementById("drop");
-let timer;
+let timer, last;
 
 function preview(url, type, label) {
   if (type.startsWith("image/")) {
-    return `<img src="${esc(url)}" alt="${esc(label)}" onerror="this.outerHTML='<div class=&quot;blocked&quot;>403 — CloudFront refused it<br>(no valid signature)</div>'">`;
+    return `<img src="${esc(url)}" alt="${esc(label)}" onerror="this.outerHTML='<div class=&quot;blocked&quot;>' + t('refused') + '</div>'">`;
   }
-  return `<a href="${esc(url)}" target="_blank" rel="noopener">Open the PDF</a>`;
+  return `<a href="${esc(url)}" target="_blank" rel="noopener">${t("openPdf")}</a>`;
 }
+
+function render({rec, link}) {
+  const unsigned = link.url.split("?")[0];
+  const params = Object.fromEntries(new URL(link.url).searchParams);
+  const expires = Number(params.Expires) * 1000;
+  out.innerHTML = `
+    <span class="label">${t("result")}</span>
+    <p class="ok" style="margin:0">${t("stored")} <b>${esc(rec.original_filename)}</b> (${money(rec.size_bytes / 1024)} KB, ${esc(rec.content_type)}) ${t("asFile")} #${rec.id}.</p>
+    <div class="compare">
+      <div class="shot"><b>${t("withSig")}</b>${preview(link.url, rec.content_type, "signed")}
+        <span class="hint">${t("expiresIn")} <b id="countdown"></b></span></div>
+      <div class="shot"><b>${t("noSig")}</b>${preview(unsigned, rec.content_type, "unsigned")}
+        <a href="${esc(unsigned)}" target="_blank" rel="noopener" class="hint">${t("openYourself")}</a></div>
+    </div>
+    <h2>${t("inside")}</h2>
+    <table>
+      <tr><th>${t("param")}</th><th>${t("value")}</th></tr>
+      <tr><td><code>Expires</code></td><td class="mono">${esc(params.Expires)} (${new Date(expires).toLocaleTimeString(LANG)})</td></tr>
+      <tr><td><code>Key-Pair-Id</code></td><td class="mono">${esc(params["Key-Pair-Id"])} — ${t("keyPair")}</td></tr>
+      <tr><td><code>Signature</code></td><td class="mono">${esc(params.Signature.slice(0, 48))}… ${t("sigDesc")}</td></tr>
+    </table>
+    ${raw({file: rec, download: link})}`;
+
+  clearInterval(timer);
+  const tick = () => {
+    const s = Math.max(0, Math.round((expires - Date.now()) / 1000));
+    document.getElementById("countdown").textContent = s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}` : t("expired");
+    if (!s) clearInterval(timer);
+  };
+  tick(); timer = setInterval(tick, 1000);
+}
+
+document.addEventListener("langchange", () => last && render(last));
 
 async function upload(file) {
   await busy(form, out, async () => {
-    out.innerHTML = `<span class="label">Result</span><p class="placeholder">Uploading ${esc(file.name)}…</p>`;
+    out.innerHTML = `<span class="label">${t("result")}</span><p class="placeholder">${t("uploading")} ${esc(file.name)}…</p>`;
     const body = new FormData();
     body.append("file", file);
     const rec = await call("/demo/storage/files", {method: "POST", body});
     const link = await call(`/demo/storage/files/${rec.id}/download-url`);
-    const unsigned = link.url.split("?")[0];
-    const params = Object.fromEntries(new URL(link.url).searchParams);
-    const expires = Number(params.Expires) * 1000;
-
-    out.innerHTML = `
-      <span class="label">Result</span>
-      <p class="ok" style="margin:0">Stored <b>${esc(rec.original_filename)}</b> (${money(rec.size_bytes / 1024)} KB, ${esc(rec.content_type)}) as file #${rec.id}.</p>
-      <div class="compare">
-        <div class="shot"><b>With signature</b>${preview(link.url, rec.content_type, "signed")}
-          <span class="hint">Expires in <b id="countdown"></b></span></div>
-        <div class="shot"><b>Same URL, no signature</b>${preview(unsigned, rec.content_type, "unsigned")}
-          <a href="${esc(unsigned)}" target="_blank" rel="noopener" class="hint">Open it yourself</a></div>
-      </div>
-      <h2>What's in the signed URL</h2>
-      <table>
-        <tr><th>Parameter</th><th>Value</th></tr>
-        <tr><td><code>Expires</code></td><td class="mono">${esc(params.Expires)} (${new Date(expires).toLocaleTimeString()})</td></tr>
-        <tr><td><code>Key-Pair-Id</code></td><td class="mono">${esc(params["Key-Pair-Id"])} — public key CloudFront verifies with</td></tr>
-        <tr><td><code>Signature</code></td><td class="mono">${esc(params.Signature.slice(0, 48))}… (RSA-SHA1 of the policy)</td></tr>
-      </table>
-      ${raw({file: rec, download: link})}`;
-
-    clearInterval(timer);
-    const tick = () => {
-      const s = Math.max(0, Math.round((expires - Date.now()) / 1000));
-      document.getElementById("countdown").textContent = s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}` : "expired — the link no longer works";
-      if (!s) clearInterval(timer);
-    };
-    tick(); timer = setInterval(tick, 1000);
+    last = {rec, link};
+    render(last);
   });
 }
 
@@ -102,9 +136,9 @@ document.getElementById("sample").addEventListener("click", () => {
   grad.addColorStop(0, "#0f172a"); grad.addColorStop(1, "#1e3a8a");
   g.fillStyle = grad; g.fillRect(0, 0, 640, 320);
   g.fillStyle = "#38bdf8"; g.font = "bold 34px sans-serif";
-  g.fillText("Signed CloudFront download", 32, 140);
+  g.fillText(t("sampleText"), 32, 140);
   g.fillStyle = "#e2e8f0"; g.font = "20px sans-serif";
-  g.fillText("Uploaded " + new Date().toLocaleString(), 32, 185);
+  g.fillText(t("sampleSub") + " " + new Date().toLocaleString(LANG), 32, 185);
   c.toBlob(blob => upload(new File([blob], "sample.png", {type: "image/png"})), "image/png");
 });
 </script>

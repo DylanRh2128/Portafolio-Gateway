@@ -38,57 +38,84 @@
 <div class="wrap">
   <header>
     <h1>Dylan Rios</h1>
-    <p class="role">Software Developer · Backend, automation &amp; AI integrations</p>
-    <p class="lead">I build backend systems that run real operations — APIs, payment flows, process automation with n8n and LLMs, and management systems for small businesses — and I deploy and run them myself on Linux with Docker.</p>
+    <p class="role" data-i18n="role">Software Developer · Backend, automation &amp; AI integrations</p>
+    <p class="lead" data-i18n="intro">I build backend systems that run real operations — APIs, payment flows, process automation with n8n and LLMs, and management systems for small businesses — and I deploy and run them myself on Linux with Docker.</p>
     <nav class="contact">
       <a href="mailto:dylanhenao211@gmail.com">✉ dylanhenao211@gmail.com</a>
       <a href="https://github.com/DylanRh2128" target="_blank" rel="noopener">GitHub · DylanRh2128</a>
     </nav>
   </header>
 
-  <h2 class="section">Projects — each one live, with its own repo, tests and docs</h2>
+  <h2 class="section" data-i18n="projects">Projects — each one live, with its own repo, tests and docs</h2>
 
   <div class="grid">
     <a class="card" href="/expense-reports/">
-      <span class="tag">● Live demo</span>
-      <h2>Expense Report Summary API</h2>
-      <p>Upload a CSV of expenses and get totals, a category breakdown and an executive summary written by an LLM — all math in Python, never by the model.</p>
+      <span class="tag" data-i18n="live">● Live demo</span>
+      <h2 data-i18n="exp.title">Expense Report Summary API</h2>
+      <p data-i18n="exp.desc">Upload a CSV of expenses and get totals, a category breakdown and an executive summary written by an LLM — all math in Python, never by the model.</p>
       <div class="stack">FastAPI · PostgreSQL · OpenAI API</div>
-      <span class="cta">Try it →</span>
+      <span class="cta" data-i18n="try">Try it →</span>
     </a>
 
     <a class="card" href="/ticket-classifier/">
-      <span class="tag">● Live demo</span>
-      <h2>Support Ticket Classifier Bot</h2>
-      <p>n8n sends every Gmail email to this API, which classifies it by category and urgency with an LLM through a fixed schema and keeps history and stats.</p>
+      <span class="tag" data-i18n="live">● Live demo</span>
+      <h2 data-i18n="sup.title">Support Ticket Classifier Bot</h2>
+      <p data-i18n="sup.desc">n8n sends every Gmail email to this API, which classifies it by category and urgency with an LLM through a fixed schema and keeps history and stats.</p>
       <div class="stack">FastAPI · PostgreSQL · OpenAI API · n8n</div>
-      <span class="cta">Try it →</span>
+      <span class="cta" data-i18n="try">Try it →</span>
     </a>
 
     <a class="card" href="/file-storage/">
-      <span class="tag">● Live demo</span>
-      <h2>Private File Storage API</h2>
-      <p>Private S3 bucket served only through short-lived RSA-signed CloudFront URLs. Upload a file and watch the unsigned link get refused.</p>
+      <span class="tag" data-i18n="live">● Live demo</span>
+      <h2 data-i18n="sto.title">Private File Storage API</h2>
+      <p data-i18n="sto.desc">Private S3 bucket served only through short-lived RSA-signed CloudFront URLs. Upload a file and watch the unsigned link get refused.</p>
       <div class="stack">FastAPI · PostgreSQL · AWS S3 + CloudFront</div>
-      <span class="cta">Try it →</span>
+      <span class="cta" data-i18n="try">Try it →</span>
     </a>
 
     <a class="card" href="/payments/">
-      <span class="tag">● Live demo</span>
-      <h2>Stripe Checkout + Invoice API</h2>
-      <p>Pay through Stripe Checkout in test mode and follow the payment live until the signed webhook confirms it and generates the PDF invoice.</p>
+      <span class="tag" data-i18n="live">● Live demo</span>
+      <h2 data-i18n="pay.title">Stripe Checkout + Invoice API</h2>
+      <p data-i18n="pay.desc">Pay through Stripe Checkout in test mode and follow the payment live until the signed webhook confirms it and generates the PDF invoice.</p>
       <div class="stack">FastAPI · PostgreSQL · Stripe · reportlab</div>
-      <span class="cta">Try it →</span>
+      <span class="cta" data-i18n="try">Try it →</span>
     </a>
 
     <a class="card" href="/pos/">
-      <span class="tag">● Clickable prototype</span>
-      <h2>QuickBite POS — Restaurant Billing System</h2>
-      <p>Offline desktop point of sale for a real restaurant: visual menu, delivery zones, change calculator, cash close-out across midnight shifts, reports.</p>
+      <span class="tag" data-i18n="proto">● Clickable prototype</span>
+      <h2 data-i18n="pos.title">QuickBite POS — Restaurant Billing System</h2>
+      <p data-i18n="pos.desc">Offline desktop point of sale for a real restaurant: visual menu, delivery zones, change calculator, cash close-out across midnight shifts, reports.</p>
       <div class="stack">.NET 8 · Blazor Hybrid · EF Core · PostgreSQL</div>
-      <span class="cta">See the project →</span>
+      <span class="cta" data-i18n="see">See the project →</span>
     </a>
   </div>
 </div>
+
+<script src="/assets/demo.js"></script>
+<script>
+i18n({
+  en: {},
+  es: {
+    title: "Dylan Rios · Desarrollador de software",
+    role: "Desarrollador de software · Backend, automatización e integraciones con IA",
+    intro: "Construyo sistemas backend que sostienen operaciones reales — APIs, flujos de pago, automatización de procesos con n8n y LLMs, y sistemas de gestión para pequeñas empresas — y los despliego y opero yo mismo en Linux con Docker.",
+    projects: "Proyectos — todos en vivo, cada uno con su repo, tests y documentación",
+    live: "● Demo en vivo",
+    proto: "● Prototipo navegable",
+    try: "Probarlo →",
+    see: "Ver el proyecto →",
+    "exp.title": "API de resumen de gastos",
+    "exp.desc": "Sube un CSV de gastos y obtén totales, el desglose por categoría y un resumen ejecutivo escrito por un LLM — todas las cuentas en Python, nunca las hace el modelo.",
+    "sup.title": "Bot clasificador de tickets de soporte",
+    "sup.desc": "n8n envía cada correo de Gmail a esta API, que lo clasifica por categoría y urgencia con un LLM a través de un esquema fijo y guarda historial y estadísticas.",
+    "sto.title": "API de almacenamiento privado de archivos",
+    "sto.desc": "Bucket S3 privado que solo se sirve por URLs de CloudFront firmadas con RSA y de corta duración. Sube un archivo y mira cómo se rechaza el enlace sin firma.",
+    "pay.title": "API de pagos con Stripe y facturación",
+    "pay.desc": "Paga con Stripe Checkout en modo prueba y sigue el pago en vivo hasta que el webhook firmado lo confirma y genera la factura en PDF.",
+    "pos.title": "QuickBite POS — Sistema de facturación para restaurante",
+    "pos.desc": "Punto de venta de escritorio sin internet para un restaurante real: menú visual, zonas de domicilio, cálculo de vueltas, cuadre de caja en turnos que cruzan la medianoche y reportes.",
+  },
+});
+</script>
 </body>
 </html>

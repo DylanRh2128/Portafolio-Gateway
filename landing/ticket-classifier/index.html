@@ -8,61 +8,116 @@
 </head>
 <body>
 <div class="wrap">
-  <a class="back" href="/">← All projects</a>
-  <h1>Support Ticket Classifier Bot</h1>
-  <p class="lead">An n8n workflow watches a Gmail inbox and posts every new email to this API's webhook. The API classifies it with an LLM — forced to answer through a fixed schema, then re-validated server-side — and stores the ticket for history and stats. Here you play the customer.</p>
+  <a class="back" href="/" data-i18n="back">← All projects</a>
+  <h1 data-i18n="h1">Support Ticket Classifier Bot</h1>
+  <p class="lead" data-i18n="lead">An n8n workflow watches a Gmail inbox and posts every new email to this API's webhook. The API classifies it with an LLM — forced to answer through a fixed schema, then re-validated server-side — and stores the ticket for history and stats. Here you play the customer.</p>
   <div class="stack">FastAPI · PostgreSQL · OpenAI API · n8n</div>
   <div class="links">
-    <a href="/support/docs">API docs (Swagger)</a>
-    <a href="https://github.com/DylanRh2128/BotAutomatizacionDiaria">Source on GitHub</a>
+    <a href="/support/docs" data-i18n="docs">API docs (Swagger)</a>
+    <a href="https://github.com/DylanRh2128/BotAutomatizacionDiaria" data-i18n="source">Source on GitHub</a>
   </div>
 
-  <div class="flow"><span>Gmail</span><i>→</i><span>n8n trigger</span><i>→</i><span>Webhook (shared secret)</span><i>→</i><span>LLM function call</span><i>→</i><span>Enum check</span><i>→</i><span>PostgreSQL</span></div>
+  <div class="flow" data-i18n="flow"><span>Gmail</span><i>→</i><span>n8n trigger</span><i>→</i><span>Webhook (shared secret)</span><i>→</i><span>LLM function call</span><i>→</i><span>Enum check</span><i>→</i><span>PostgreSQL</span></div>
 
   <div class="layout">
     <form class="panel" id="form">
-      <span class="label">Customer email</span>
+      <span class="label" data-i18n="email">Customer email</span>
       <div class="row" id="examples"></div>
-      <input name="subject" maxlength="200" placeholder="Subject" />
-      <textarea name="body" rows="7" maxlength="2000" placeholder="Write the email body…"></textarea>
-      <button>Classify</button>
-      <span class="hint">Categories: billing, technical, shipping, account, other · Urgency: low, medium, high</span>
+      <input name="subject" maxlength="200" data-i18n-ph="subjectPh" placeholder="Subject" />
+      <textarea name="body" rows="7" maxlength="2000" data-i18n-ph="bodyPh" placeholder="Write the email body…"></textarea>
+      <button data-i18n="go">Classify</button>
+      <span class="hint" data-i18n="cats">Categories: billing, technical, shipping, account, other · Urgency: low, medium, high</span>
     </form>
 
     <section class="panel">
-      <span class="label">Classification</span>
-      <div id="out"><p class="placeholder">Pick an example or write your own email, then classify it.</p></div>
-      <span class="label">Your tickets this session</span>
-      <div id="history"><p class="placeholder">Nothing yet.</p></div>
+      <span class="label" data-i18n="result">Classification</span>
+      <div id="out"><p class="placeholder" data-i18n="empty">Pick an example or write your own email, then classify it.</p></div>
+      <span class="label" data-i18n="history">Your tickets this session</span>
+      <div id="history"><p class="placeholder" data-i18n="none">Nothing yet.</p></div>
     </section>
   </div>
 </div>
 
 <script src="/assets/demo.js"></script>
 <script>
+i18n({
+  en: {working: "Classifying…", urgency: "urgency", ticket: "ticket", subject: "Subject", category: "Category"},
+  es: {
+    title: "Demo del clasificador de tickets",
+    h1: "Bot clasificador de tickets de soporte",
+    lead: "Un flujo de n8n vigila una bandeja de Gmail y envía cada correo nuevo al webhook de esta API. La API lo clasifica con un LLM — obligado a responder con un esquema fijo y validado de nuevo en el servidor — y guarda el ticket para historial y estadísticas. Aquí tú eres el cliente.",
+    flow: "<span>Gmail</span><i>→</i><span>Disparador de n8n</span><i>→</i><span>Webhook (secreto compartido)</span><i>→</i><span>Llamada a función del LLM</span><i>→</i><span>Validación de categorías</span><i>→</i><span>PostgreSQL</span>",
+    email: "Correo del cliente",
+    subjectPh: "Asunto",
+    bodyPh: "Escribe el cuerpo del correo…",
+    go: "Clasificar",
+    cats: "Categorías: billing, technical, shipping, account, other · Urgencia: low, medium, high",
+    result: "Clasificación",
+    empty: "Elige un ejemplo o escribe tu propio correo y clasifícalo.",
+    history: "Tus tickets en esta sesión",
+    none: "Todavía nada.",
+    working: "Clasificando…", urgency: "urgencia", ticket: "ticket", subject: "Asunto", category: "Categoría",
+  },
+});
+
 const EXAMPLES = {
-  "Double charge": ["Charged twice for my order", "Hi, my card shows two charges for the same order #4821. Please refund one of them as soon as possible."],
-  "App crash": ["App closes when I log in", "Every time I try to log in the app closes immediately. I can't access my account at all and I have work to do today."],
-  "Late package": ["Where is my package?", "My order was supposed to arrive last Friday and the tracking hasn't updated in five days. Can you check?"],
-  "Change email": ["Update my account email", "Hello, I'd like to change the email on my account to my new work address whenever you get a chance. Thanks!"],
+  en: {
+    "Double charge": ["Charged twice for my order", "Hi, my card shows two charges for the same order #4821. Please refund one of them as soon as possible."],
+    "App crash": ["App closes when I log in", "Every time I try to log in the app closes immediately. I can't access my account at all and I have work to do today."],
+    "Late package": ["Where is my package?", "My order was supposed to arrive last Friday and the tracking hasn't updated in five days. Can you check?"],
+    "Change email": ["Update my account email", "Hello, I'd like to change the email on my account to my new work address whenever you get a chance. Thanks!"],
+  },
+  es: {
+    "Cobro doble": ["Me cobraron dos veces el pedido", "Hola, en mi tarjeta aparecen dos cobros del mismo pedido #4821. Por favor reembólsenme uno lo antes posible."],
+    "La app se cierra": ["La app se cierra al iniciar sesión", "Cada vez que intento entrar la aplicación se cierra de inmediato. No puedo acceder a mi cuenta y hoy tengo que trabajar."],
+    "Paquete demorado": ["¿Dónde está mi paquete?", "Mi pedido debía llegar el viernes pasado y el rastreo no se actualiza hace cinco días. ¿Pueden revisar?"],
+    "Cambiar correo": ["Actualizar el correo de mi cuenta", "Hola, quisiera cambiar el correo de mi cuenta por el de mi nuevo trabajo cuando puedan. ¡Gracias!"],
+  },
 };
 const form = document.getElementById("form");
 const out = document.getElementById("out");
 const tickets = [];
+let last;
 
-for (const [name, [subject, body]] of Object.entries(EXAMPLES)) {
-  const b = document.createElement("button");
-  b.type = "button"; b.className = "chip"; b.textContent = name;
-  b.onclick = () => { form.subject.value = subject; form.body.value = body; };
-  document.getElementById("examples").append(b);
+function renderExamples() {
+  const box = document.getElementById("examples");
+  box.innerHTML = "";
+  for (const [name, [subject, body]] of Object.entries(EXAMPLES[LANG])) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.textContent = name;
+    b.onclick = () => { form.subject.value = subject; form.body.value = body; prefilled = false; };
+    box.append(b);
+  }
 }
-[form.subject.value, form.body.value] = EXAMPLES["Double charge"];
+
+function renderResult() {
+  if (!last) return;
+  out.innerHTML = `
+    <div class="row"><span class="pill">${esc(last.category)}</span><span class="pill ${esc(last.urgency)}">${t("urgency")}: ${esc(last.urgency)}</span><span class="hint">${t("ticket")} #${last.id}</span></div>
+    <p style="margin:0">${esc(last.reason)}</p>
+    ${raw(last)}`;
+  document.getElementById("history").innerHTML = `<div class="table-scroll"><table>
+    <tr><th>#</th><th>${t("subject")}</th><th>${t("category")}</th><th>${t("urgency")}</th></tr>
+    ${tickets.map(x => `<tr><td>${x.id}</td><td>${esc(x.subject)}</td><td><span class="pill">${esc(x.category)}</span></td><td><span class="pill ${esc(x.urgency)}">${esc(x.urgency)}</span></td></tr>`).join("")}
+  </table></div>`;
+}
+
+// Prefill with the first example of the current language, unless the visitor already typed something.
+let prefilled = true;
+form.addEventListener("input", () => prefilled = false);
+function prefill() {
+  if (!prefilled) return;
+  [form.subject.value, form.body.value] = Object.values(EXAMPLES[LANG])[0];
+}
+
+document.addEventListener("langchange", () => { renderExamples(); prefill(); renderResult(); });
+renderExamples(); prefill();
 
 form.addEventListener("submit", e => {
   e.preventDefault();
   busy(form, out, async () => {
-    out.innerHTML = `<p class="placeholder">Classifying…</p>`;
-    const r = await call("/demo/support/classify", {
+    out.innerHTML = `<p class="placeholder">${t("working")}</p>`;
+    last = await call("/demo/support/classify", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
@@ -70,17 +125,11 @@ form.addEventListener("submit", e => {
         sender: "visitor@example.com",
         subject: form.subject.value,
         body: form.body.value,
+        language: LANG,
       }),
     });
-    out.innerHTML = `
-      <div class="row"><span class="pill">${esc(r.category)}</span><span class="pill ${esc(r.urgency)}">urgency: ${esc(r.urgency)}</span><span class="hint">ticket #${r.id}</span></div>
-      <p style="margin:0">${esc(r.reason)}</p>
-      ${raw(r)}`;
-    tickets.unshift(r);
-    document.getElementById("history").innerHTML = `<div class="table-scroll"><table>
-      <tr><th>#</th><th>Subject</th><th>Category</th><th>Urgency</th></tr>
-      ${tickets.map(t => `<tr><td>${t.id}</td><td>${esc(t.subject)}</td><td><span class="pill">${esc(t.category)}</span></td><td><span class="pill ${esc(t.urgency)}">${esc(t.urgency)}</span></td></tr>`).join("")}
-    </table></div>`;
+    tickets.unshift(last);
+    renderResult();
   });
 });
 </script>
