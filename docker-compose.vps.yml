@@ -30,7 +30,8 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/expenses_db
       # Without it the APIs start, but report/ticket calls return 502.
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-unset}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-unset}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.4-nano}
       API_KEY: ${API_KEY:?set API_KEY in .env}
       UVICORN_ROOT_PATH: /expenses
 
@@ -39,7 +40,8 @@ services:
     build: ../BotAutomatizacionDiaria
     environment:
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/tickets_db
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-unset}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-unset}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.4-nano}
       API_KEY: ${API_KEY}
       WEBHOOK_SECRET: ${WEBHOOK_SECRET:?set WEBHOOK_SECRET in .env}
       UVICORN_ROOT_PATH: /support

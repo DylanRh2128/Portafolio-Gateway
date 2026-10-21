@@ -22,7 +22,7 @@ services:
     environment:
       UVICORN_ROOT_PATH: /expenses  # so /docs fetches /expenses/openapi.json
       DATABASE_URL: sqlite:////tmp/expenses.db
-      ANTHROPIC_API_KEY: test
+      OPENAI_API_KEY: test
       API_KEY: test
 
   support-api:
@@ -30,7 +30,7 @@ services:
     environment:
       UVICORN_ROOT_PATH: /support  # so /docs fetches /support/openapi.json
       DATABASE_URL: sqlite:////tmp/support.db
-      ANTHROPIC_API_KEY: test
+      OPENAI_API_KEY: test
       WEBHOOK_SECRET: test
       API_KEY: test
 
