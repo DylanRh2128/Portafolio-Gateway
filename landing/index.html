@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Backend Portfolio</title>
+<title>Dylan Rios · Software Developer</title>
+<meta name="description" content="Dylan Rios, software developer. Live demos of backend projects: AI automation, Stripe payments, private S3/CloudFront storage and a restaurant POS." />
 <link rel="stylesheet" href="/assets/demo.css" />
 <style>
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; }
@@ -25,12 +26,27 @@
   a.card .stack { margin: 0; }
   a.card .cta { color: var(--accent); font-weight: 600; font-size: 14px; }
   .tag { display: inline-block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--ok); }
+  header { margin-bottom: 36px; }
+  header .role { font-size: 18px; color: var(--accent); margin: 0 0 12px; }
+  header .contact { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  header .contact a { font-size: 14px; text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; background: var(--card); }
+  header .contact a:hover { border-color: var(--accent); }
+  h2.section { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); margin: 0 0 14px; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Backend Portfolio</h1>
-  <p class="lead" style="margin-bottom:32px">Independent projects, each with its own repo, tests and docs. The four APIs run live behind one nginx gateway — open any of them and try it with real data.</p>
+  <header>
+    <h1>Dylan Rios</h1>
+    <p class="role">Software Developer · Backend, automation &amp; AI integrations</p>
+    <p class="lead">I build backend systems that run real operations — APIs, payment flows, process automation with n8n and LLMs, and management systems for small businesses — and I deploy and run them myself on Linux with Docker.</p>
+    <nav class="contact">
+      <a href="mailto:dylanhenao211@gmail.com">✉ dylanhenao211@gmail.com</a>
+      <a href="https://github.com/DylanRh2128" target="_blank" rel="noopener">GitHub · DylanRh2128</a>
+    </nav>
+  </header>
+
+  <h2 class="section">Projects — each one live, with its own repo, tests and docs</h2>
 
   <div class="grid">
     <a class="card" href="/expense-reports/">
