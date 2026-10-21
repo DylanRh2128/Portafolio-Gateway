@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>QuickBite POS</title>
+<link rel="stylesheet" href="/assets/demo.css" />
+<style>
+  .frame { width: 100%; height: 720px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+  .layers { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+  .layers div { background: var(--field); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .layers b { color: var(--accent); }
+  ul.features { margin: 0; padding-left: 18px; font-size: 14px; display: flex; flex-direction: column; gap: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">← All projects</a>
+  <h1>QuickBite POS — Restaurant Billing System</h1>
+  <p class="lead">A desktop point-of-sale built for a real fast-food restaurant (shown here with its brand removed). It replaced a system whose credentials had left with former staff, and it works offline: billing can't stop because the internet did. Designed so a new cashier can take an order without training — a visual menu instead of codes.</p>
+  <div class="stack">.NET 8 · Blazor Hybrid (WPF + BlazorWebView) · Entity Framework Core · PostgreSQL · xUnit · GitHub Actions</div>
+  <div class="links">
+    <a href="https://github.com/DylanRh2128/SistemaFacturacion/tree/37faba4">Source on GitHub (portfolio version)</a>
+    <a href="/pos/prototype/" target="_blank" rel="noopener">Open the prototype full screen</a>
+  </div>
+
+  <div class="layout" style="margin-bottom:16px">
+    <section class="panel">
+      <span class="label">What it does</span>
+      <ul class="features">
+        <li>Visual menu with photos, search by name or price, add-ons per product.</li>
+        <li>Dine-in, take-away and delivery orders in a single screen.</li>
+        <li>Delivery cost computed from the customer's street, using zones the admin configures (with overlap warnings).</li>
+        <li>Recurring customers found by name or phone, address filled in.</li>
+        <li>Change calculator for cash, or a pasted transfer receipt (Ctrl+V).</li>
+        <li>Cash-register close-out by <i>operating day</i> — shifts that cross midnight still count as one day.</li>
+        <li>Sales reports by day, month and year; close-out history for month end.</li>
+        <li>Thermal printer tickets; cashier and administrator roles.</li>
+      </ul>
+    </section>
+    <section class="panel">
+      <span class="label">Architecture</span>
+      <div class="layers">
+        <div><b>Facturacion.Desktop</b> — WPF window hosting BlazorWebView, the .exe and DI setup</div>
+        <div><b>Facturacion.UI</b> — Razor screens and shared components, no business logic</div>
+        <div><b>Facturacion.Core</b> — pure business rules (delivery zones, change, operating day), no UI or SQL</div>
+        <div><b>Facturacion.Data</b> — EF Core + PostgreSQL repositories implementing Core's interfaces</div>
+      </div>
+      <p class="hint" style="margin:0">Dependencies only point down, so the rules most likely to cost money — delivery pricing, change, close-out — are unit-tested in isolation with in-memory fakes, and run in CI on every push.</p>
+    </section>
+  </div>
+
+  <section class="panel">
+    <span class="label">Try the clickable prototype</span>
+    <p class="hint" style="margin:0">The HTML prototype built before development to agree on the flow: press <i>Ingresar</i>, add products, switch delivery type and charge an order. The real app is a Windows desktop program, so it can't run in a browser — this is the closest thing to it.</p>
+    <iframe class="frame" src="/pos/prototype/" title="QuickBite POS prototype" loading="lazy"></iframe>
+  </section>
+</div>
+</body>
+</html>

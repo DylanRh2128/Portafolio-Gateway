@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Expense Report Demo</title>
+<link rel="stylesheet" href="/assets/demo.css" />
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">← All projects</a>
+  <h1>Expense Report Summary API</h1>
+  <p class="lead">Upload a CSV of expenses and get back totals, a breakdown by category and an executive summary written by an LLM. Every number is computed in plain Python — the model only writes the narrative, so it can't invent a figure.</p>
+  <div class="stack">FastAPI · PostgreSQL · OpenAI API</div>
+  <div class="links">
+    <a href="/expenses/docs">API docs (Swagger)</a>
+    <a href="https://github.com/DylanRh2128/APIAutomatizacionAI">Source on GitHub</a>
+  </div>
+
+  <div class="flow"><span>CSV upload</span><i>→</i><span>Validate rows</span><i>→</i><span>Totals &amp; outliers (Python)</span><i>→</i><span>LLM writes summary</span><i>→</i><span>Saved to PostgreSQL</span></div>
+
+  <div class="layout">
+    <form class="panel" id="form">
+      <span class="label">Input CSV</span>
+      <textarea name="csv" rows="12" spellcheck="false">date,category,amount,description
+2026-07-01,Servicios,450000,Pago de internet
+2026-07-03,Nomina,2000000,Pago quincenal empleados
+2026-07-05,Insumos,180000,Compra de empaques
+2026-07-08,Insumos,4500000,Compra grande de insumos poco comun
+2026-07-10,Servicios,90000,Agua
+2026-07-12,Nomina,2000000,Pago quincenal empleados
+2026-07-15,Insumos,150000,Compra de servilletas</textarea>
+      <span class="hint">Columns: <code>date</code> (YYYY-MM-DD), <code>category</code>, <code>amount</code>, <code>description</code>. Edit freely, or load your own file.</span>
+      <div class="row">
+        <button>Generate report</button>
+        <label class="hint">or load a .csv <input type="file" name="file" accept=".csv,text/csv" style="width:auto" /></label>
+      </div>
+    </form>
+
+    <section class="panel" id="out">
+      <span class="label">Report</span>
+      <p class="placeholder">Generate a report to see the totals, the chart and the LLM's summary here.</p>
+    </section>
+  </div>
+</div>
+
+<script src="/assets/demo.js"></script>
+<script>
+const form = document.getElementById("form");
+const out = document.getElementById("out");
+
+form.file.addEventListener("change", async () => {
+  const f = form.file.files[0];
+  if (f) form.csv.value = await f.text();
+});
+
+form.addEventListener("submit", e => {
+  e.preventDefault();
+  busy(form, out, async () => {
+    out.innerHTML = `<span class="label">Report</span><p class="placeholder">Computing totals and asking the LLM for a summary…</p>`;
+    const body = new FormData();
+    body.append("file", new Blob([form.csv.value], {type: "text/csv"}), "expenses.csv");
+    const r = await call("/demo/expenses/reports", {method: "POST", body});
+
+    const byCat = {};
+    for (const x of r.expenses) byCat[x.category] = (byCat[x.category] || 0) + x.amount;
+    const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+    const max = cats[0][1];
+
+    out.innerHTML = `
+      <span class="label">Report #${r.id}</span>
+      <div class="kpis">
+        <div class="kpi"><b>${money(r.total_amount)}</b><span>Total spent</span></div>
+        <div class="kpi"><b>${r.expenses.length}</b><span>Expenses</span></div>
+        <div class="kpi"><b>${cats.length}</b><span>Categories</span></div>
+        <div class="kpi"><b style="font-size:15px">${esc(r.period_start)}<br>${esc(r.period_end)}</b><span>Period</span></div>
+      </div>
+      <h2>By category</h2>
+      <div class="bars">${cats.map(([c, v]) => `
+        <div class="bar"><span>${esc(c)}</span><div class="track"><div class="fill" style="width:${(v / max * 100).toFixed(1)}%"></div></div><span class="num">${money(v)}</span></div>`).join("")}
+      </div>
+      <h2>Executive summary <span class="hint">— written by the LLM from the numbers above</span></h2>
+      <div>${r.summary_text.split(/\n+/).map(p => `<p style="margin:0 0 10px">${esc(p)}</p>`).join("")}</div>
+      <h2>Expenses</h2>
+      <div class="table-scroll"><table>
+        <tr><th>Date</th><th>Category</th><th>Description</th><th style="text-align:right">Amount</th></tr>
+        ${r.expenses.map(x => `<tr><td>${esc(x.date)}</td><td>${esc(x.category)}</td><td>${esc(x.description)}</td><td class="num">${money(x.amount)}</td></tr>`).join("")}
+      </table></div>
+      ${raw(r)}`;
+  });
+});
+</script>
+</body>
+</html>

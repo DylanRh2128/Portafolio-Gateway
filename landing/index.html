@@ -4,291 +4,75 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Backend Portfolio</title>
+<link rel="stylesheet" href="/assets/demo.css" />
 <style>
-  :root {
-    --bg: #0f172a;
-    --card: #1e293b;
-    --field: #0f172a;
-    --text: #e2e8f0;
-    --text-dim: #94a3b8;
-    --accent: #38bdf8;
-    --ok: #4ade80;
-    --bad: #f87171;
-    --line: rgba(148, 163, 184, 0.2);
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    padding: 48px 16px;
-  }
-  .wrap { max-width: 960px; margin: 0 auto; }
-  h1 { font-size: 28px; margin-bottom: 6px; }
-  p.sub { color: var(--text-dim); margin-top: 0; margin-bottom: 40px; }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 16px;
-  }
-  .card {
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; }
+  a.card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: 12px;
     padding: 20px;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-  }
-  .card h2 { margin: 0 0 8px; font-size: 17px; }
-  .card p { color: var(--text-dim); font-size: 14px; margin: 0 0 14px; }
-  .stack { font-size: 12px; color: var(--accent); margin-bottom: 14px; }
-  .links a {
-    font-size: 13px;
-    color: var(--accent);
-    text-decoration: none;
-    margin-right: 14px;
-  }
-  .links a:hover { text-decoration: underline; }
-  .demo {
-    border-top: 1px solid var(--line);
-    margin-top: 14px;
-    padding-top: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .demo .label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); }
-  textarea, input, select {
-    width: 100%;
-    background: var(--field);
     color: var(--text);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 8px 10px;
-    font: 13px/1.4 ui-monospace, Consolas, monospace;
+    text-decoration: none;
+    transition: border-color .15s, transform .15s;
   }
-  textarea { resize: vertical; }
-  input[type=file] { font-family: inherit; }
-  button {
-    align-self: flex-start;
-    background: var(--accent);
-    color: #0f172a;
-    border: 0;
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-  }
-  button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
-  button:disabled { opacity: .5; cursor: wait; }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; }
-  .out { font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
-  .out:empty { display: none; }
-  .out .err { color: var(--bad); }
-  .out .ok { color: var(--ok); }
-  .out a { color: var(--accent); }
-  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(56, 189, 248, .15); color: var(--accent); margin-right: 6px; }
-  .pill.high { background: rgba(248, 113, 113, .15); color: var(--bad); }
-  details { font-size: 12px; color: var(--text-dim); }
-  details pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 240px; overflow: auto; background: var(--field); padding: 8px; border-radius: 8px; }
-  .hint { font-size: 12px; color: var(--text-dim); }
-  code { font-size: 12px; color: var(--text); }
+  a.card:hover, a.card:focus-visible { border-color: var(--accent); transform: translateY(-2px); }
+  a.card h2 { margin: 0; }
+  a.card p { margin: 0; color: var(--text-dim); font-size: 14px; flex: 1; }
+  a.card .stack { margin: 0; }
+  a.card .cta { color: var(--accent); font-weight: 600; font-size: 14px; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--ok); }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Backend Portfolio</h1>
-    <p class="sub">Four independent APIs, each with its own repo, tests and docs, served behind one nginx gateway. Every card below calls the real, deployed API — try them.</p>
+<div class="wrap">
+  <h1>Backend Portfolio</h1>
+  <p class="lead" style="margin-bottom:32px">Independent projects, each with its own repo, tests and docs. The four APIs run live behind one nginx gateway — open any of them and try it with real data.</p>
 
-    <div class="grid">
-      <div class="card">
-        <h2>Expense Report Summary API</h2>
-        <p>Upload a CSV of expenses, get back totals and an executive summary written by an LLM. All the math is plain Python; the model only writes the narrative.</p>
-        <div class="stack">FastAPI · PostgreSQL · OpenAI API</div>
-        <div class="links">
-          <a href="/expenses/docs">API docs</a>
-          <a href="https://github.com/DylanRh2128/APIAutomatizacionAI">Repo</a>
-        </div>
-        <form class="demo" id="expenses">
-          <span class="label">Try it — edit the CSV if you like</span>
-          <textarea name="csv" rows="7" spellcheck="false">date,category,amount,description
-2026-07-01,Servicios,450000,Pago de internet
-2026-07-03,Nomina,2000000,Pago quincenal empleados
-2026-07-05,Insumos,180000,Compra de empaques
-2026-07-08,Insumos,4500000,Compra grande de insumos poco comun
-2026-07-10,Servicios,90000,Agua
-2026-07-12,Nomina,2000000,Pago quincenal empleados
-2026-07-15,Insumos,150000,Compra de servilletas</textarea>
-          <button>Generate report</button>
-          <div class="out"></div>
-        </form>
-      </div>
+  <div class="grid">
+    <a class="card" href="/expense-reports/">
+      <span class="tag">● Live demo</span>
+      <h2>Expense Report Summary API</h2>
+      <p>Upload a CSV of expenses and get totals, a category breakdown and an executive summary written by an LLM — all math in Python, never by the model.</p>
+      <div class="stack">FastAPI · PostgreSQL · OpenAI API</div>
+      <span class="cta">Try it →</span>
+    </a>
 
-      <div class="card">
-        <h2>Support Ticket Classifier Bot</h2>
-        <p>n8n watches a Gmail inbox and posts each email to this API, which classifies it by category and urgency with an LLM and keeps history and stats.</p>
-        <div class="stack">FastAPI · PostgreSQL · OpenAI API · n8n</div>
-        <div class="links">
-          <a href="/support/docs">API docs</a>
-          <a href="https://github.com/DylanRh2128/BotAutomatizacionDiaria">Repo</a>
-        </div>
-        <form class="demo" id="support">
-          <span class="label">Try it — write a customer email</span>
-          <input name="subject" value="Charged twice for my order" maxlength="200" />
-          <textarea name="body" rows="4" maxlength="2000">Hi, my card shows two charges for the same order #4821. Please refund one of them as soon as possible.</textarea>
-          <button>Classify</button>
-          <div class="out"></div>
-        </form>
-      </div>
+    <a class="card" href="/ticket-classifier/">
+      <span class="tag">● Live demo</span>
+      <h2>Support Ticket Classifier Bot</h2>
+      <p>n8n sends every Gmail email to this API, which classifies it by category and urgency with an LLM through a fixed schema and keeps history and stats.</p>
+      <div class="stack">FastAPI · PostgreSQL · OpenAI API · n8n</div>
+      <span class="cta">Try it →</span>
+    </a>
 
-      <div class="card">
-        <h2>Private File Storage API</h2>
-        <p>Files go to a private S3 bucket and can only be downloaded through short-lived signed CloudFront URLs — an unsigned link is refused.</p>
-        <div class="stack">FastAPI · PostgreSQL · AWS S3 + CloudFront</div>
-        <div class="links">
-          <a href="/storage/docs">API docs</a>
-          <a href="https://github.com/DylanRh2128/AlmacenamientoCDN">Repo</a>
-        </div>
-        <form class="demo" id="storage">
-          <span class="label">Try it — PNG, JPG or PDF up to 2 MB</span>
-          <input type="file" name="file" accept="image/png,image/jpeg,application/pdf" />
-          <div class="row">
-            <button>Upload</button>
-            <button type="button" class="secondary" data-sample>Use a sample image</button>
-          </div>
-          <div class="out"></div>
-        </form>
-      </div>
+    <a class="card" href="/file-storage/">
+      <span class="tag">● Live demo</span>
+      <h2>Private File Storage API</h2>
+      <p>Private S3 bucket served only through short-lived RSA-signed CloudFront URLs. Upload a file and watch the unsigned link get refused.</p>
+      <div class="stack">FastAPI · PostgreSQL · AWS S3 + CloudFront</div>
+      <span class="cta">Try it →</span>
+    </a>
 
-      <div class="card">
-        <h2>Stripe Checkout + Invoice API</h2>
-        <p>Creates a Stripe Checkout session; once Stripe's signed webhook confirms the payment, a PDF invoice is generated automatically.</p>
-        <div class="stack">FastAPI · PostgreSQL · Stripe · reportlab</div>
-        <div class="links">
-          <a href="/billing/docs">API docs</a>
-          <a href="https://github.com/DylanRh2128/PasarelaPagoFacturacion">Repo</a>
-        </div>
-        <form class="demo" id="billing">
-          <span class="label">Try it — Stripe test mode, no real money</span>
-          <select name="product_id">
-            <option value="report_generation">Custom report generation — $20</option>
-            <option value="consulting_session">1-hour consulting session — $50</option>
-          </select>
-          <input type="email" name="customer_email" value="visitor@example.com" required />
-          <button>Go to checkout</button>
-          <span class="hint">Pay with test card <code>4242 4242 4242 4242</code>, any future date, any CVC.</span>
-          <div class="out"></div>
-        </form>
-      </div>
+    <a class="card" href="/payments/">
+      <span class="tag">● Live demo</span>
+      <h2>Stripe Checkout + Invoice API</h2>
+      <p>Pay through Stripe Checkout in test mode and follow the payment live until the signed webhook confirms it and generates the PDF invoice.</p>
+      <div class="stack">FastAPI · PostgreSQL · Stripe · reportlab</div>
+      <span class="cta">Try it →</span>
+    </a>
 
-      <div class="card">
-        <h2>QuickBite POS — Restaurant Billing System</h2>
-        <p>Desktop point-of-sale system: orders, delivery zones, cash register close-out, and reporting. A desktop app, so it isn't served here.</p>
-        <div class="stack">.NET 8 · Blazor Hybrid · PostgreSQL</div>
-        <div class="links">
-          <a href="https://github.com/DylanRh2128/SistemaFacturacion/tree/37faba4">Repo (portfolio version)</a>
-        </div>
-      </div>
-    </div>
+    <a class="card" href="/pos/">
+      <span class="tag">● Clickable prototype</span>
+      <h2>QuickBite POS — Restaurant Billing System</h2>
+      <p>Offline desktop point of sale for a real restaurant: visual menu, delivery zones, change calculator, cash close-out across midnight shifts, reports.</p>
+      <div class="stack">.NET 8 · Blazor Hybrid · EF Core · PostgreSQL</div>
+      <span class="cta">See the project →</span>
+    </a>
   </div>
-
-<script>
-const esc = s => String(s).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
-const money = n => n.toLocaleString("en-US", {maximumFractionDigits: 2});
-
-async function call(url, options) {
-  const res = await fetch(url, options);
-  const text = await res.text();
-  let data;
-  try { data = JSON.parse(text); } catch { data = text; }
-  if (res.ok) return data;
-  const detail = res.status === 429 ? "Too many tries from your network — wait a minute and try again."
-    : res.status === 413 ? "That file is too large for the demo."
-    : (data && data.detail) ? (typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail))
-    : `Request failed (${res.status}).`;
-  throw new Error(detail);
-}
-
-const raw = data => `<details><summary>Raw JSON response</summary><pre>${esc(JSON.stringify(data, null, 2))}</pre></details>`;
-
-function demo(id, run) {
-  const form = document.getElementById(id);
-  const out = form.querySelector(".out");
-  const go = async extra => {
-    const buttons = form.querySelectorAll("button");
-    buttons.forEach(b => b.disabled = true);
-    out.innerHTML = "Working…";
-    try { out.innerHTML = await run(form, extra); }
-    catch (e) { out.innerHTML = `<span class="err">${esc(e.message)}</span>`; }
-    finally { buttons.forEach(b => b.disabled = false); }
-  };
-  form.addEventListener("submit", e => { e.preventDefault(); go(); });
-  return go;
-}
-
-demo("expenses", async form => {
-  const body = new FormData();
-  body.append("file", new Blob([form.csv.value], {type: "text/csv"}), "expenses.csv");
-  const r = await call("/demo/expenses/reports", {method: "POST", body});
-  return `<p><b>Total:</b> ${money(r.total_amount)} · <b>Period:</b> ${esc(r.period_start)} → ${esc(r.period_end)}</p>
-    <p>${esc(r.summary_text).replace(/\n+/g, "</p><p>")}</p>${raw(r)}`;
-});
-
-demo("support", async form => {
-  const payload = {
-    message_id: "demo-" + crypto.randomUUID(),
-    sender: "visitor@example.com",
-    subject: form.subject.value,
-    body: form.body.value,
-  };
-  const r = await call("/demo/support/classify", {
-    method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload),
-  });
-  return `<p><span class="pill">${esc(r.category)}</span><span class="pill ${r.urgency === "high" ? "high" : ""}">urgency: ${esc(r.urgency)}</span></p>
-    <p>${esc(r.reason)}</p>${raw(r)}`;
-});
-
-async function uploadFile(file) {
-  const body = new FormData();
-  body.append("file", file);
-  const rec = await call("/demo/storage/files", {method: "POST", body});
-  const link = await call(`/demo/storage/files/${rec.id}/download-url`);
-  const unsigned = link.url.split("?")[0];
-  return `<p class="ok">Uploaded <b>${esc(rec.original_filename)}</b> (${money(rec.size_bytes / 1024)} KB) to the private bucket.</p>
-    <p><a href="${esc(link.url)}" target="_blank" rel="noopener">Open with signed URL</a> — valid for ${link.expires_in_seconds / 60} minutes.</p>
-    <p><a href="${esc(unsigned)}" target="_blank" rel="noopener">Open without the signature</a> — CloudFront refuses it.</p>${raw({file: rec, download: link})}`;
-}
-
-const storageGo = demo("storage", async (form, sample) => {
-  const file = sample || form.file.files[0];
-  if (!file) throw new Error("Choose a file first, or use the sample image.");
-  return uploadFile(file);
-});
-
-document.querySelector("#storage [data-sample]").addEventListener("click", () => {
-  const c = document.createElement("canvas");
-  c.width = 480; c.height = 240;
-  const g = c.getContext("2d");
-  g.fillStyle = "#1e293b"; g.fillRect(0, 0, c.width, c.height);
-  g.fillStyle = "#38bdf8"; g.font = "bold 28px sans-serif";
-  g.fillText("Signed CloudFront download", 24, 110);
-  g.fillStyle = "#94a3b8"; g.font = "18px sans-serif";
-  g.fillText(new Date().toISOString(), 24, 150);
-  c.toBlob(blob => storageGo(new File([blob], "sample.png", {type: "image/png"})), "image/png");
-});
-
-demo("billing", async form => {
-  const r = await call("/billing/checkout-sessions", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({product_id: form.product_id.value, customer_email: form.customer_email.value}),
-  });
-  location.href = r.checkout_url;
-  return "Redirecting to Stripe Checkout…";
-});
-</script>
+</div>
 </body>
 </html>

@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>QuickBite POS · Prototipo de Punto de Venta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  /*
+    DESIGN PLAN (ver docs/FRONTEND.md)
+    Color: --bg #FAF6F2 (crema suave, no blanco puro) · --surface #FFFFFF (tarjetas/paneles) ·
+      --surface-2 #F3ECE4 (paneles anidados: inputs, sub-paneles) · --primary #2563EB (accion principal,
+      seleccion/activo) · --primary-ink #FFFFFF · --accent #059669 (boton Cobrar y su flujo de pago) ·
+      --accent-ink #2B2320 · --text #2B2320 · --text-dim tono atenuado de --text · --ok #2E8B57 · --danger rojo.
+      Tema unico claro, plano (sin sombras duras ni elevacion), muy redondeado: el color y el radio
+      comunican "tocable", no la profundidad.
+    Type: fuente unica Nunito (400/600/700/800) para todo — titulos/precios en 800, subtitulos en 600,
+      texto general en 400; numeros con tabular-nums para que las cifras alineen en columnas.
+    Layout: dos actos en un lienzo — login centrado, luego la pantalla de venta de una sola vista (grid de
+      catalogo a la izquierda, panel de pedido fijo a la derecha), con una hoja deslizante para Cobrar/Vueltas.
+  */
+
+  :root{
+    --bg:#FAF6F2;
+    --surface:#FFFFFF;
+    --surface-2:#F3ECE4;
+    --primary:#2563EB;
+    --primary-ink:#FFFFFF;
+    --accent:#059669;
+    --accent-ink:#2B2320;
+    --text:#2B2320;
+    --text-dim:#9C8C82;
+    --line:rgba(43,35,32,.12);
+    --line-strong:rgba(43,35,32,.22);
+    --danger:#D64545;
+    --ok:#2E8B57;
+    --radius:18px;
+    --font-display: "Nunito", system-ui, sans-serif;
+    --font-body: "Nunito", system-ui, -apple-system, sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background: radial-gradient(ellipse 900px 500px at 12% -10%, rgba(232,73,29,.05), transparent 60%), var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    font-weight:400;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{ background:var(--accent); color:var(--accent-ink); }
+  button{ font-family:inherit; }
+  button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
+    outline:2px solid var(--primary); outline-offset:2px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.01ms !important; transition-duration:.01ms !important; }
+  }
+
+  .num{ font-variant-numeric: tabular-nums; }
+
+  /* ---------- Top status strip (shared) ---------- */
+  .devbar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; padding:10px 20px;
+    background:var(--primary); color:var(--primary-ink);
+    font:600 12.5px/1.3 var(--font-body);
+    letter-spacing:.02em;
+  }
+  .devbar b{ font-weight:800; }
+  .devbar .tag{
+    background:rgba(255,255,255,.18); color:var(--primary-ink);
+    padding:3px 9px; border-radius:100px; font-weight:700; font-size:11px;
+    letter-spacing:.04em; text-transform:uppercase;
+  }
+
+  /* ================= LOGIN SCREEN ================= */
+  #login{
+    min-height:calc(100vh - 40px);
+    display:flex; align-items:center; justify-content:center;
+    padding:40px 20px;
+  }
+  .login-card{
+    width:100%; max-width:378px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:22px;
+    padding:36px 30px 30px;
+  }
+  .brand{
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+    margin-bottom:28px;
+  }
+  .brand-badge{
+    width:76px; height:76px; border-radius:22px;
+    background:linear-gradient(155deg, var(--primary), var(--accent));
+    display:flex; align-items:center; justify-content:center;
+    font-size:34px;
+    transform:rotate(-6deg);
+  }
+  .brand-word{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:29px;
+    letter-spacing:.01em;
+    color:var(--primary);
+  }
+  .brand-tag{
+    font-size:11.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--text-dim); font-weight:700;
+  }
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block; font-size:12px; font-weight:700; letter-spacing:.05em;
+    text-transform:uppercase; color:var(--text-dim); margin-bottom:7px;
+  }
+  .field input{
+    width:100%; padding:13px 14px; border-radius:14px;
+    border:1px solid var(--line-strong); background:var(--surface-2);
+    color:var(--text); font-size:15px; font-family:inherit;
+  }
+  .field input::placeholder{ color:var(--text-dim); }
+  .btn-primary{
+    width:100%; padding:14px 24px; border:none; border-radius:18px;
+    background:var(--primary); color:var(--primary-ink);
+    font-weight:800; font-size:15.5px; letter-spacing:.01em;
+    cursor:pointer; margin-top:6px;
+    transition:filter .12s ease;
+  }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .login-foot{
+    text-align:center; margin-top:18px; font-size:12.5px; color:var(--text-dim);
+  }
+  .role-chip{
+    display:flex; gap:8px; margin-bottom:22px; background:var(--surface-2);
+    border:1px solid var(--line); border-radius:14px; padding:4px;
+  }
+  .role-chip button{
+    flex:1; padding:9px 0; border:none; border-radius:11px; background:transparent;
+    color:var(--text-dim); font-weight:700; font-size:13px; cursor:pointer; font-family:inherit;
+  }
+  .role-chip button.active{ background:var(--primary); color:var(--primary-ink); }
+
+  /* ================= SALE SCREEN ================= */
+  #sale{ display:none; min-height:calc(100vh - 40px); }
+  #sale.visible{ display:flex; }
+  .app-shell{
+    display:flex; width:100%; min-height:calc(100vh - 40px);
+  }
+
+  /* ---- catalog (left) ---- */
+  .catalog{
+    flex:1 1 auto; min-width:0;
+    padding:22px 22px 32px;
+    display:flex; flex-direction:column; gap:16px;
+  }
+  .catalog-head{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+  }
+  .wordmark-mini{
+    display:flex; align-items:center; gap:10px;
+  }
+  .wordmark-mini .dot{
+    width:34px; height:34px; border-radius:10px;
+    background:linear-gradient(155deg, var(--primary), var(--accent));
+    display:flex; align-items:center; justify-content:center; font-size:17px;
+    transform:rotate(-6deg);
+  }
+  .wordmark-mini span{
+    font-family:var(--font-display); font-weight:800; font-size:19px; color:var(--primary);
+    display:inline-block;
+  }
+  .shift-pill{
+    font-size:12px; color:var(--text-dim); font-weight:600;
+    display:flex; align-items:center; gap:6px;
+  }
+  .shift-pill .led{ width:7px; height:7px; border-radius:50%; background:var(--ok); box-shadow:0 0 8px var(--ok); }
+
+  .search-row{ position:relative; }
+  .search-row input{
+    width:100%; padding:13px 16px 13px 42px; border-radius:14px;
+    border:1px solid var(--line); background:var(--surface);
+    color:var(--text); font-size:14.5px; font-family:inherit;
+  }
+  .search-row input::placeholder{ color:var(--text-dim); }
+  .search-row svg{
+    position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    opacity:.5; color:var(--text-dim);
+  }
+
+  .tabs{ display:flex; gap:8px; flex-wrap:wrap; }
+  .tab{
+    padding:9px 16px; border-radius:100px; border:1px solid var(--line);
+    background:var(--surface); color:var(--text-dim); font-family:inherit;
+    font-weight:700; font-size:13px; cursor:pointer; white-space:nowrap;
+    transition:background .12s ease, color .12s ease, border-color .12s ease;
+  }
+  .tab.active{ background:var(--primary); color:var(--primary-ink); border-color:var(--primary); }
+  .tab:hover:not(.active){ border-color:var(--line-strong); color:var(--text); }
+
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(148px,1fr));
+    gap:14px; overflow-y:auto; padding-bottom:6px; align-content:start;
+  }
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:12px; cursor:pointer; text-align:left;
+    display:flex; flex-direction:column; gap:10px;
+    transition:border-color .12s ease, background .12s ease;
+    position:relative; overflow:hidden;
+  }
+  .card:hover{ border-color:var(--line-strong); }
+  .card:hover .thumb{ transform:scale(1.05); }
+  .card.selected{ border-color:var(--primary); background:var(--surface-2); }
+  .card .thumb{
+    aspect-ratio:1/1; border-radius:12px; overflow:hidden;
+    background:linear-gradient(155deg, var(--surface-2), #ECE0D2);
+    display:flex; align-items:center; justify-content:center; font-size:34px;
+    border:1px solid var(--line);
+    transition:transform .25s ease;
+  }
+  .card .name{ font-weight:700; font-size:13.5px; line-height:1.25; }
+  .card .price{ font-weight:800; color:var(--primary); font-size:13.5px; }
+  .card .qty-badge{
+    position:absolute; top:8px; right:8px; background:var(--primary); color:var(--primary-ink);
+    min-width:20px; height:20px; padding:0 5px; border-radius:100px;
+    font-size:11.5px; font-weight:800; display:none; align-items:center; justify-content:center;
+  }
+  .card.selected .qty-badge{ display:flex; }
+  .scroll-hint{
+    display:flex; justify-content:center; padding:2px 0 0;
+  }
+  .scroll-hint .puck{
+    width:38px; height:38px; border-radius:50%; background:var(--surface);
+    border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
+    color:var(--text-dim); animation:bob 1.6s ease-in-out infinite;
+  }
+  @keyframes bob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(4px); } }
+
+  /* ---- order rail (right) ---- */
+  .order-rail{
+    width:352px; flex:0 0 auto;
+    background:var(--surface);
+    border-left:1px solid var(--line);
+    display:flex; flex-direction:column;
+    padding:20px 18px 18px;
+    gap:14px;
+  }
+  .fulfillment{
+    display:flex; background:var(--surface-2); border:1px solid var(--line);
+    border-radius:16px; padding:4px; gap:4px;
+  }
+  .fulfillment button{
+    flex:1; padding:10px 0; border:none; border-radius:12px; background:transparent; font-family:inherit;
+    color:var(--text-dim); font-weight:800; font-size:13px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .fulfillment button.active{ background:var(--primary); color:var(--primary-ink); }
+
+  .sub-panel{
+    background:var(--surface-2); border:1px solid var(--line); border-radius:14px;
+    padding:12px; display:none; flex-direction:column; gap:8px;
+  }
+  .sub-panel.visible{ display:flex; }
+  .sub-panel input, .sub-panel select{
+    width:100%; padding:10px 12px; border-radius:11px; border:1px solid var(--line-strong);
+    background:var(--surface); color:var(--text); font-size:13.5px; font-family:inherit;
+  }
+  .zone-note{
+    font-size:12px; color:var(--text-dim); display:flex; justify-content:space-between;
+    padding-top:2px;
+  }
+  .zone-note b{ color:var(--primary); font-weight:800; }
+
+  .order-lines{
+    flex:1 1 auto; overflow-y:auto; display:flex; flex-direction:column; gap:10px;
+    min-height:120px; padding-right:2px;
+  }
+  .order-empty{
+    margin:auto; text-align:center; color:var(--text-dim); font-size:13px; padding:20px 10px;
+  }
+  .line{
+    display:flex; flex-direction:column; gap:2px;
+    padding-bottom:10px; border-bottom:1px dashed var(--line);
+  }
+  .line-top{ display:flex; justify-content:space-between; gap:10px; font-size:13.5px; font-weight:700; }
+  .line-addon{ font-size:12px; color:var(--text-dim); padding-left:14px; }
+  .line-sub{ font-size:12.5px; color:var(--text-dim); }
+
+  .totals{
+    border-top:1px solid var(--line); padding-top:12px;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .totals .row{ display:flex; justify-content:space-between; font-size:13px; color:var(--text-dim); }
+  .totals .row.grand{
+    font-size:21px; font-weight:800; color:var(--text); padding-top:4px;
+  }
+  .totals .row.grand .num{ color:var(--accent-ink); }
+
+  .btn-cobrar{
+    width:100%; padding:16px 24px; border:none; border-radius:18px;
+    background:var(--accent); color:var(--accent-ink);
+    font-weight:800; font-size:16.5px; cursor:pointer; font-family:inherit;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:filter .12s ease;
+  }
+  .btn-cobrar:hover{ filter:brightness(1.05); }
+  .btn-cobrar:disabled{ opacity:.4; cursor:not-allowed; filter:none; }
+
+  /* ---- addon popover ---- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(43,35,32,.45);
+    display:none; align-items:center; justify-content:center; z-index:40; padding:20px;
+  }
+  .overlay.visible{ display:flex; }
+  .popover{
+    width:100%; max-width:340px; background:var(--surface); border:1px solid var(--line);
+    border-radius:20px; padding:20px;
+  }
+  .popover h3{ margin:0 0 4px; font-size:17px; font-family:var(--font-display); font-weight:800; }
+  .popover .sub{ margin:0 0 16px; font-size:12.5px; color:var(--text-dim); }
+  .addon-opt{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:11px 4px; border-bottom:1px solid var(--line); cursor:pointer;
+  }
+  .addon-opt:last-of-type{ border-bottom:none; }
+  .addon-opt .chk{
+    width:20px; height:20px; border-radius:7px; border:2px solid var(--line-strong);
+    display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+  }
+  .addon-opt.checked .chk{ background:var(--primary); border-color:var(--primary); color:var(--primary-ink); }
+  .addon-opt .lbl{ flex:1; padding:0 10px; font-size:13.5px; }
+  .addon-opt .pr{ font-size:12.5px; color:var(--text-dim); }
+  .popover-actions{ display:flex; gap:10px; margin-top:16px; }
+  .btn-ghost{
+    flex:1; padding:11px 24px; border-radius:18px; border:2px solid var(--primary); font-family:inherit;
+    background:#fff; color:var(--primary); font-weight:700; cursor:pointer; font-size:13.5px;
+  }
+  .popover-actions .btn-primary{ margin:0; flex:1.4; }
+
+  /* ---- cobrar sheet ---- */
+  .sheet-overlay{
+    position:fixed; inset:0; background:rgba(43,35,32,.5);
+    display:none; align-items:flex-end; justify-content:center; z-index:50;
+  }
+  .sheet-overlay.visible{ display:flex; }
+  .sheet{
+    width:100%; max-width:480px; background:var(--surface);
+    border:1px solid var(--line); border-bottom:none;
+    border-radius:22px 22px 0 0; padding:26px 24px 30px;
+    animation:slideup .22s ease-out;
+  }
+  @keyframes slideup{ from{ transform:translateY(24px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+  .sheet-head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+  .sheet-head h2{ margin:0; font-family:var(--font-display); font-size:20px; font-weight:800; }
+  .sheet-close{ background:none; border:none; color:var(--text-dim); font-size:22px; cursor:pointer; line-height:1; }
+  .sheet-total{ font-size:13px; color:var(--text-dim); margin-bottom:18px; }
+  .sheet-total .num{ color:var(--primary); font-weight:800; font-size:15px; }
+
+  .pay-tabs{ display:flex; gap:8px; margin-bottom:18px; }
+  .pay-tabs button{
+    flex:1; padding:10px; border-radius:14px; border:1px solid var(--line); font-family:inherit;
+    background:var(--surface-2); color:var(--text-dim); font-weight:700; font-size:13.5px; cursor:pointer;
+  }
+  .pay-tabs button.active{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+
+  .pay-pane{ display:none; }
+  .pay-pane.visible{ display:block; }
+
+  .cash-display{
+    background:var(--surface-2); border:1px solid var(--line); border-radius:16px;
+    padding:16px; text-align:center; margin-bottom:14px;
+  }
+  .cash-display .lbl{ font-size:11.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.08em; font-weight:700; }
+  .cash-display .amt{ font-size:30px; font-weight:800; margin-top:4px; }
+  .cash-display .amt.zero{ color:var(--text-dim); }
+
+  .quick-amts{ display:flex; gap:8px; margin-bottom:14px; }
+  .quick-amts button{
+    flex:1; padding:9px 0; border-radius:12px; border:1px solid var(--line-strong); font-family:inherit;
+    background:#fff; color:var(--text); font-weight:700; font-size:12.5px; cursor:pointer;
+  }
+  .quick-amts button:hover{ border-color:var(--primary); color:var(--primary); }
+
+  .keypad{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
+  .keypad button{
+    padding:14px 0; border-radius:14px; border:1px solid var(--line); font-family:inherit;
+    background:var(--surface-2); color:var(--text); font-size:17px; font-weight:700; cursor:pointer;
+  }
+  .keypad button:hover{ border-color:var(--line-strong); }
+  .keypad button.clear{ color:var(--danger); font-size:13px; }
+
+  .change-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 16px; border-radius:14px; margin-bottom:16px;
+    background:rgba(46,139,87,.08); border:1px solid rgba(46,139,87,.3);
+  }
+  .change-row.insufficient{ background:rgba(214,69,69,.08); border-color:rgba(214,69,69,.3); }
+  .change-row .lbl{ font-size:12.5px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:.05em; }
+  .change-row .val{ font-size:19px; font-weight:800; color:var(--ok); }
+  .change-row.insufficient .val{ color:var(--danger); font-size:13px; }
+
+  .transfer-drop{
+    border:2px dashed var(--line-strong); border-radius:16px; padding:26px 16px;
+    text-align:center; margin-bottom:14px; color:var(--text-dim); font-size:13px;
+  }
+  .transfer-drop b{ color:var(--primary); display:block; margin-bottom:4px; font-size:14px; }
+  .transfer-note{ font-size:11.5px; color:var(--text-dim); text-align:center; margin-bottom:16px; }
+  .transfer-note b{ color:var(--text); }
+
+  /* ---- pedido como panel deslizante en ventanas angostas ----
+     Caso real: el cajero divide el monitor a la mitad para contestar WhatsApp de domicilios
+     al lado del sistema. Esa ventana queda angosta pero sigue siendo de escritorio (alta, no
+     un celular en vertical), así que en vez de apilar el pedido debajo del catálogo — lo que
+     dejaría muy poco catálogo visible — el pedido se convierte en un panel que se abre bajo
+     demanda, y el catálogo aprovecha todo el ancho disponible. */
+  .rail-close{ display:none; }
+  .order-fab{ display:none; }
+  .rail-backdrop{ position:fixed; inset:0; background:rgba(43,35,32,.35); z-index:55; display:none; }
+  .rail-backdrop.visible{ display:block; }
+
+  @media (max-width:980px){
+    .order-rail{
+      position:fixed; top:0; right:0; bottom:0; width:368px; max-width:90vw;
+      border-left:1px solid var(--line); border-top:none; border-radius:0;
+      transform:translateX(100%); transition:transform .22s ease-out; z-index:60;
+    }
+    .order-rail.open{ transform:translateX(0); }
+    .rail-close{
+      display:flex; align-self:flex-end; align-items:center; justify-content:center;
+      width:34px; height:34px; border-radius:50%; border:none; background:var(--surface-2);
+      color:var(--text-dim); font-size:15px; cursor:pointer; margin-bottom:-8px; flex:0 0 auto;
+    }
+    .order-fab{
+      display:flex; align-items:center; gap:8px;
+      position:fixed; bottom:20px; right:20px; z-index:56;
+      background:var(--primary); color:var(--primary-ink); border:none;
+      border-radius:100px; padding:14px 22px; font-weight:800; font-size:14px;
+      cursor:pointer; font-family:inherit;
+    }
+    .order-fab .fab-count{
+      background:rgba(255,255,255,.25); border-radius:100px; padding:1px 8px; font-size:12.5px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="devbar">
+  <span><b>QUICKBITE POS · PROTOTIPO</b> — maqueta visual, sin conexión a base de datos real</span>
+  <span class="tag">Etapa B · para aprobación</span>
+</div>
+
+<!-- ============ LOGIN ============ -->
+<section id="login">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-badge">🍟</div>
+      <div class="brand-word">QuickBite</div>
+      <div class="brand-tag">Punto de venta</div>
+    </div>
+    <div class="role-chip">
+      <button type="button" class="active" data-role="Cajero">Cajero</button>
+      <button type="button" data-role="Administrador">Administrador</button>
+    </div>
+    <div class="field">
+      <label for="u">Usuario</label>
+      <input id="u" type="text" placeholder="ej. cajero1" value="cajero1" />
+    </div>
+    <div class="field">
+      <label for="p">Contraseña</label>
+      <input id="p" type="password" placeholder="••••••••" value="••••••••" />
+    </div>
+    <button class="btn-primary" id="btnLogin">Ingresar</button>
+    <div class="login-foot">Prototipo — cualquier dato entra</div>
+  </div>
+</section>
+
+<!-- ============ SALE SCREEN ============ -->
+<section id="sale">
+  <div class="app-shell">
+
+    <!-- Catalog -->
+    <div class="catalog">
+      <div class="catalog-head">
+        <div class="wordmark-mini"><span class="dot">🍟</span><span>QuickBite</span></div>
+        <div class="shift-pill"><span class="led"></span> Turno activo · cajero1</div>
+      </div>
+
+      <div class="search-row">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="search" type="text" placeholder="Buscar por nombre o precio…" />
+      </div>
+
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-cat="Hamburguesas">🍔 Hamburguesas</button>
+        <button class="tab" data-cat="Papas">🍟 Papas</button>
+        <button class="tab" data-cat="Bebidas">🥤 Bebidas</button>
+        <button class="tab" data-cat="Adiciones">➕ Adiciones</button>
+      </div>
+
+      <div class="grid" id="grid"></div>
+      <div class="scroll-hint"><div class="puck">↓</div></div>
+    </div>
+
+    <!-- Order rail -->
+    <div class="order-rail" id="orderRail">
+      <button class="rail-close" id="railClose" aria-label="Cerrar pedido">✕</button>
+      <div class="fulfillment" id="fulfillment">
+        <button class="active" data-mode="Mesa">🍽️ Mesa</button>
+        <button data-mode="Llevar">🥡 Llevar</button>
+        <button data-mode="Domicilio">🛵 Domicilio</button>
+      </div>
+
+      <div class="sub-panel" id="panelMesa">
+        <input type="text" placeholder="Número de mesa" value="4" />
+      </div>
+
+      <div class="sub-panel" id="panelDomicilio">
+        <input type="text" placeholder="Buscar cliente por nombre o teléfono…" />
+        <input type="number" placeholder="Número de calle (ej. 34)" id="calleInput" />
+        <div class="zone-note" id="zoneNote">Ingresa la calle para calcular el envío</div>
+      </div>
+
+      <div class="order-lines" id="orderLines">
+        <div class="order-empty">Toca un producto del catálogo<br/>para agregarlo al pedido</div>
+      </div>
+
+      <div class="totals">
+        <div class="row"><span>Subtotal</span><span class="num" id="subtotalVal">$0</span></div>
+        <div class="row" id="envioRow" style="display:none;"><span>Domicilio</span><span class="num" id="envioVal">$0</span></div>
+        <div class="row grand"><span>Total</span><span class="num" id="totalVal">$0</span></div>
+      </div>
+
+      <button class="btn-cobrar" id="btnCobrar" disabled>Cobrar →</button>
+    </div>
+  </div>
+
+  <div class="rail-backdrop" id="railBackdrop"></div>
+  <button class="order-fab" id="orderFab">
+    🧾 Ver pedido <span class="fab-count num" id="fabCount"></span>
+  </button>
+</section>
+
+<!-- ============ ADDON POPOVER ============ -->
+<div class="overlay" id="overlay">
+  <div class="popover">
+    <h3 id="popTitle">Elige tus salsas</h3>
+    <p class="sub">Puedes marcar varias · algunas tienen costo adicional</p>
+    <div id="addonList"></div>
+    <div class="popover-actions">
+      <button class="btn-ghost" id="popCancel">Cancelar</button>
+      <button class="btn-primary" id="popConfirm">Agregar al pedido</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ COBRAR SHEET ============ -->
+<div class="sheet-overlay" id="sheetOverlay">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2>Cobrar pedido</h2>
+      <button class="sheet-close" id="sheetClose">×</button>
+    </div>
+    <div class="sheet-total">Total a pagar <span class="num" id="sheetTotal">$0</span></div>
+
+    <div class="pay-tabs">
+      <button class="active" data-pay="efectivo">💵 Efectivo</button>
+      <button data-pay="transferencia">📲 Transferencia</button>
+    </div>
+
+    <!-- Efectivo -->
+    <div class="pay-pane visible" id="paneEfectivo">
+      <div class="cash-display">
+        <div class="lbl">Recibido</div>
+        <div class="amt zero num" id="recibidoDisplay">$0</div>
+      </div>
+      <div class="quick-amts">
+        <button data-amt="5000">+5.000</button>
+        <button data-amt="10000">+10.000</button>
+        <button data-amt="20000">+20.000</button>
+        <button data-amt="50000">+50.000</button>
+      </div>
+      <div class="keypad" id="keypad">
+        <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+        <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+        <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+        <button class="clear" data-k="C">Borrar</button><button data-k="0">0</button><button data-k="000">000</button>
+      </div>
+      <div class="change-row insufficient" id="changeRow">
+        <span class="lbl">Cambio a devolver</span>
+        <span class="val num" id="changeVal">Falta $0</span>
+      </div>
+    </div>
+
+    <!-- Transferencia -->
+    <div class="pay-pane" id="paneTransferencia">
+      <div class="transfer-drop">
+        <b>📎 Pega aquí el comprobante</b>
+        Ctrl+V con la captura copiada desde WhatsApp — es opcional
+      </div>
+      <div class="transfer-note">Puedes confirmar el pago <b>sin adjuntar</b> el comprobante si aún no lo tienes a la mano.</div>
+    </div>
+
+    <button class="btn-primary" id="btnConfirmarPago">Confirmar pago e imprimir</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var CATALOG = {
+    Hamburguesas: [
+      {n:"Hamburguesa Clásica", p:16000, addon:true},
+      {n:"Hamburguesa BBQ", p:18500, addon:true},
+      {n:"Hamburguesa Picante", p:15000, addon:true},
+      {n:"Hamburguesa de Pollo", p:21000, addon:true}
+    ],
+    Papas: [
+      {n:"Papas con Queso", p:12000, addon:true},
+      {n:"Papas con Tocineta", p:14500, addon:true},
+      {n:"Papas Mixtas", p:9000, addon:true},
+      {n:"Papas Dobles", p:16000, addon:true}
+    ],
+    Bebidas: [
+      {n:"Limonada de Coco", p:6500, addon:false},
+      {n:"Jugo de Mora", p:6000, addon:false},
+      {n:"Gaseosa Personal", p:4500, addon:false},
+      {n:"Malteada de Vainilla", p:9500, addon:false}
+    ],
+    Adiciones: [
+      {n:"Salsa de la Casa", p:0, addon:false},
+      {n:"Extra Queso", p:3000, addon:false},
+      {n:"Tocineta Crocante", p:4000, addon:false},
+      {n:"Piña Caramelizada", p:2500, addon:false}
+    ]
+  };
+  var ICONS = {Hamburguesas:"🍔", Papas:"🍟", Bebidas:"🥤", Adiciones:"➕"};
+  var ADDONS = [
+    {n:"Salsa BBQ", p:0}, {n:"Salsa Rosada", p:0}, {n:"Piña Caramelizada", p:2500},
+    {n:"Extra Queso", p:3000}, {n:"Tocineta Crocante", p:4000}
+  ];
+
+  function fmt(n){ return "$" + n.toLocaleString("es-CO"); }
+
+  // ---- Login ----
+  document.querySelectorAll(".role-chip button").forEach(function(b){
+    b.addEventListener("click", function(){
+      document.querySelectorAll(".role-chip button").forEach(function(x){ x.classList.remove("active"); });
+      b.classList.add("active");
+    });
+  });
+  document.getElementById("btnLogin").addEventListener("click", function(){
+    document.getElementById("login").style.display = "none";
+    document.getElementById("sale").classList.add("visible");
+  });
+
+  // ---- Panel de pedido deslizante (ventana angosta: cajero con WhatsApp al lado) ----
+  function openRail(){
+    document.getElementById("orderRail").classList.add("open");
+    document.getElementById("railBackdrop").classList.add("visible");
+  }
+  function closeRail(){
+    document.getElementById("orderRail").classList.remove("open");
+    document.getElementById("railBackdrop").classList.remove("visible");
+  }
+  document.getElementById("orderFab").addEventListener("click", openRail);
+  document.getElementById("railClose").addEventListener("click", closeRail);
+  document.getElementById("railBackdrop").addEventListener("click", closeRail);
+
+  // ---- Catalog rendering ----
+  var currentCat = "Hamburguesas";
+  var order = []; // {name, price, qty, addons:[{n,p}]}
+  var pendingItem = null;
+  var pendingAddons = [];
+
+  function renderGrid(filterText){
+    var grid = document.getElementById("grid");
+    grid.innerHTML = "";
+    var items = CATALOG[currentCat];
+    (filterText ? Object.keys(CATALOG).reduce(function(acc,c){ return acc.concat(CATALOG[c].map(function(i){ return Object.assign({cat:c}, i); })); },[]) : items.map(function(i){ return Object.assign({cat:currentCat}, i); }))
+      .filter(function(i){
+        if(!filterText) return true;
+        var q = filterText.toLowerCase();
+        return i.n.toLowerCase().indexOf(q) !== -1 || String(i.p).indexOf(q) !== -1;
+      })
+      .forEach(function(item){
+        var card = document.createElement("button");
+        card.type = "button";
+        card.className = "card";
+        var qtyInOrder = order.filter(function(l){ return l.name === item.n; }).reduce(function(a,l){ return a + l.qty; }, 0);
+        if(qtyInOrder > 0) card.classList.add("selected");
+        card.innerHTML =
+          '<div class="thumb">' + (ICONS[item.cat]||"🍽️") + '</div>' +
+          '<div class="name">' + item.n + '</div>' +
+          '<div class="price num">' + fmt(item.p) + '</div>' +
+          '<div class="qty-badge">' + (qtyInOrder||"") + '</div>';
+        card.addEventListener("click", function(){ addItem(item); });
+        grid.appendChild(card);
+      });
+  }
+
+  document.querySelectorAll(".tab").forEach(function(t){
+    t.addEventListener("click", function(){
+      document.querySelectorAll(".tab").forEach(function(x){ x.classList.remove("active"); });
+      t.classList.add("active");
+      currentCat = t.dataset.cat;
+      document.getElementById("search").value = "";
+      renderGrid();
+    });
+  });
+  document.getElementById("search").addEventListener("input", function(e){
+    renderGrid(e.target.value.trim());
+  });
+
+  function addItem(item){
+    if(item.addon){
+      pendingItem = item;
+      pendingAddons = [];
+      openAddonPopover(item);
+    } else {
+      pushLine(item, []);
+    }
+  }
+
+  function pushLine(item, addons){
+    order.push({ name:item.n, price:item.p, qty:1, addons:addons });
+    renderGrid(document.getElementById("search").value.trim());
+    renderOrder();
+  }
+
+  // ---- Addon popover ----
+  function openAddonPopover(item){
+    document.getElementById("popTitle").textContent = "Personaliza: " + item.n;
+    var list = document.getElementById("addonList");
+    list.innerHTML = "";
+    ADDONS.forEach(function(a){
+      var row = document.createElement("div");
+      row.className = "addon-opt";
+      row.innerHTML =
+        '<div class="chk"></div>' +
+        '<div class="lbl">' + a.n + '</div>' +
+        '<div class="pr">' + (a.p ? "+" + fmt(a.p) : "Gratis") + '</div>';
+      row.addEventListener("click", function(){
+        var idx = pendingAddons.findIndex(function(x){ return x.n === a.n; });
+        if(idx === -1){ pendingAddons.push(a); row.classList.add("checked"); }
+        else { pendingAddons.splice(idx,1); row.classList.remove("checked"); }
+      });
+      list.appendChild(row);
+    });
+    document.getElementById("overlay").classList.add("visible");
+  }
+  document.getElementById("popCancel").addEventListener("click", function(){
+    document.getElementById("overlay").classList.remove("visible");
+  });
+  document.getElementById("popConfirm").addEventListener("click", function(){
+    document.getElementById("overlay").classList.remove("visible");
+    pushLine(pendingItem, pendingAddons.slice());
+  });
+
+  // ---- Order rail ----
+  function renderOrder(){
+    var wrap = document.getElementById("orderLines");
+    wrap.innerHTML = "";
+    if(order.length === 0){
+      wrap.innerHTML = '<div class="order-empty">Toca un producto del catálogo<br/>para agregarlo al pedido</div>';
+    } else {
+      order.forEach(function(line, idx){
+        var addonTotal = line.addons.reduce(function(a,x){ return a+x.p; }, 0);
+        var lineTotal = (line.price + addonTotal) * line.qty;
+        var div = document.createElement("div");
+        div.className = "line";
+        div.innerHTML =
+          '<div class="line-top"><span>' + line.qty + '× ' + line.name + '</span><span class="num">' + fmt(lineTotal) + '</span></div>' +
+          line.addons.map(function(a){ return '<div class="line-addon">+ ' + a.n + '</div>'; }).join("") +
+          '<div class="line-sub">' + fmt(line.price) + ' c/u' + (addonTotal ? " + adiciones" : "") + '</div>';
+        wrap.appendChild(div);
+      });
+    }
+
+    var subtotal = order.reduce(function(a,l){
+      var addonTotal = l.addons.reduce(function(x,y){ return x+y.p; }, 0);
+      return a + (l.price + addonTotal) * l.qty;
+    }, 0);
+
+    var envio = currentFulfillment === "Domicilio" ? getEnvioCost() : 0;
+    var total = subtotal + envio;
+
+    document.getElementById("subtotalVal").textContent = fmt(subtotal);
+    document.getElementById("envioRow").style.display = currentFulfillment === "Domicilio" ? "flex" : "none";
+    document.getElementById("envioVal").textContent = fmt(envio);
+    document.getElementById("totalVal").textContent = fmt(total);
+    document.getElementById("btnCobrar").disabled = order.length === 0 || (currentFulfillment === "Domicilio" && envio === null);
+
+    var itemCount = order.reduce(function(a,l){ return a + l.qty; }, 0);
+    document.getElementById("fabCount").textContent = itemCount > 0 ? itemCount + " · " + fmt(total) : "";
+  }
+
+  // ---- Fulfillment / domicilio zones ----
+  var currentFulfillment = "Mesa";
+  var ZONES = [ {from:1, to:20, cost:3000}, {from:21, to:40, cost:5000}, {from:41, to:60, cost:7000} ];
+
+  function getEnvioCost(){
+    var calle = parseInt(document.getElementById("calleInput").value, 10);
+    if(isNaN(calle)) return 0;
+    var zone = ZONES.find(function(z){ return calle >= z.from && calle <= z.to; });
+    return zone ? zone.cost : null;
+  }
+  function updateZoneNote(){
+    var calle = document.getElementById("calleInput").value;
+    var note = document.getElementById("zoneNote");
+    if(!calle){ note.innerHTML = "Ingresa la calle para calcular el envío"; return; }
+    var cost = getEnvioCost();
+    if(cost === null){ note.innerHTML = '<span style="color:var(--danger)">Zona no configurada — confirma con un administrador</span>'; }
+    else { note.innerHTML = "Costo de envío: <b class='num'>" + fmt(cost) + "</b>"; }
+  }
+  document.getElementById("calleInput").addEventListener("input", function(){ updateZoneNote(); renderOrder(); });
+
+  document.querySelectorAll("#fulfillment button").forEach(function(b){
+    b.addEventListener("click", function(){
+      document.querySelectorAll("#fulfillment button").forEach(function(x){ x.classList.remove("active"); });
+      b.classList.add("active");
+      currentFulfillment = b.dataset.mode;
+      document.getElementById("panelMesa").classList.toggle("visible", currentFulfillment === "Mesa");
+      document.getElementById("panelDomicilio").classList.toggle("visible", currentFulfillment === "Domicilio");
+      renderOrder();
+    });
+  });
+
+  // ---- Cobrar sheet ----
+  document.getElementById("btnCobrar").addEventListener("click", function(){
+    document.getElementById("sheetTotal").textContent = document.getElementById("totalVal").textContent;
+    document.getElementById("sheetOverlay").classList.add("visible");
+    closeRail();
+  });
+  document.getElementById("sheetClose").addEventListener("click", function(){
+    document.getElementById("sheetOverlay").classList.remove("visible");
+  });
+
+  document.querySelectorAll(".pay-tabs button").forEach(function(b){
+    b.addEventListener("click", function(){
+      document.querySelectorAll(".pay-tabs button").forEach(function(x){ x.classList.remove("active"); });
+      b.classList.add("active");
+      var pay = b.dataset.pay;
+      document.getElementById("paneEfectivo").classList.toggle("visible", pay === "efectivo");
+      document.getElementById("paneTransferencia").classList.toggle("visible", pay === "transferencia");
+      document.getElementById("btnConfirmarPago").disabled = false;
+    });
+  });
+
+  var recibido = 0;
+  function totalNumeric(){
+    var raw = document.getElementById("totalVal").textContent.replace(/[^\d]/g,"");
+    return parseInt(raw||"0",10);
+  }
+  function renderCash(){
+    document.getElementById("recibidoDisplay").textContent = fmt(recibido);
+    document.getElementById("recibidoDisplay").classList.toggle("zero", recibido === 0);
+    var total = totalNumeric();
+    var change = recibido - total;
+    var row = document.getElementById("changeRow");
+    var val = document.getElementById("changeVal");
+    if(change < 0){
+      row.classList.add("insufficient");
+      val.textContent = "Falta " + fmt(Math.abs(change));
+      document.getElementById("btnConfirmarPago").setAttribute("disabled","disabled");
+    } else {
+      row.classList.remove("insufficient");
+      val.textContent = fmt(change);
+      document.getElementById("btnConfirmarPago").removeAttribute("disabled");
+    }
+  }
+  document.querySelectorAll(".keypad button").forEach(function(b){
+    b.addEventListener("click", function(){
+      var k = b.dataset.k;
+      if(k === "C"){ recibido = 0; }
+      else { recibido = parseInt(String(recibido) + k, 10); }
+      renderCash();
+    });
+  });
+  document.querySelectorAll(".quick-amts button").forEach(function(b){
+    b.addEventListener("click", function(){
+      recibido += parseInt(b.dataset.amt, 10);
+      renderCash();
+    });
+  });
+
+  document.getElementById("btnConfirmarPago").addEventListener("click", function(){
+    document.getElementById("sheetOverlay").classList.remove("visible");
+    order = [];
+    recibido = 0;
+    renderCash();
+    renderOrder();
+    renderGrid();
+    alert("Pedido cobrado — en el sistema real aquí se imprime el ticket.");
+  });
+
+  renderGrid();
+  renderOrder();
+  updateZoneNote();
+})();
+</script>
+</body>
+</html>

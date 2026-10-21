@@ -70,8 +70,8 @@ services:
       API_KEY: ${API_KEY}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_unset}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_unset}
-      CHECKOUT_SUCCESS_URL: ${PUBLIC_URL:?set PUBLIC_URL in .env}/billing/checkout-success
-      CHECKOUT_CANCEL_URL: ${PUBLIC_URL}/billing/checkout-cancelled
+      CHECKOUT_SUCCESS_URL: ${PUBLIC_URL:?set PUBLIC_URL in .env}/payments/
+      CHECKOUT_CANCEL_URL: ${PUBLIC_URL}/payments/?cancelled=1
       UVICORN_ROOT_PATH: /billing
 
   gateway:

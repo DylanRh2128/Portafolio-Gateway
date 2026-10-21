@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Payments Demo</title>
+<link rel="stylesheet" href="/assets/demo.css" />
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">← All projects</a>
+  <h1>Stripe Checkout + Invoice API</h1>
+  <p class="lead">The API creates a Stripe Checkout session and records the payment as pending. Coming back from Stripe proves nothing — only Stripe's signed webhook marks it paid, and that same webhook generates the PDF invoice. This page follows each step live.</p>
+  <div class="stack">FastAPI · PostgreSQL · Stripe Checkout + webhooks · reportlab</div>
+  <div class="links">
+    <a href="/billing/docs">API docs (Swagger)</a>
+    <a href="https://github.com/DylanRh2128/PasarelaPagoFacturacion">Source on GitHub</a>
+  </div>
+
+  <div class="layout">
+    <form class="panel" id="form">
+      <span class="label">Buy something (Stripe test mode)</span>
+      <label><input type="radio" name="product_id" value="report_generation" checked style="width:auto" /> Custom report generation — <b>$20</b></label>
+      <label><input type="radio" name="product_id" value="consulting_session" style="width:auto" /> 1-hour consulting session — <b>$50</b></label>
+      <input type="email" name="customer_email" value="visitor@example.com" required />
+      <button>Pay with Stripe</button>
+      <span class="hint">No real money. Use card <code>4242 4242 4242 4242</code>, any future date, any CVC, any name.</span>
+      <div id="formOut"></div>
+    </form>
+
+    <section class="panel">
+      <span class="label">Payment timeline</span>
+      <ol class="steps" id="steps">
+        <li data-step="created">Checkout session created, payment saved as <i>pending</i></li>
+        <li data-step="paid">Paid on Stripe's hosted page</li>
+        <li data-step="webhook">Stripe's webhook received and signature verified</li>
+        <li data-step="invoice">PDF invoice generated</li>
+      </ol>
+      <div id="out"><p class="placeholder">Start a payment and this timeline fills in as each step happens.</p></div>
+    </section>
+  </div>
+</div>
+
+<script src="/assets/demo.js"></script>
+<script>
+const form = document.getElementById("form");
+const out = document.getElementById("out");
+const params = new URLSearchParams(location.search);
+const sessionId = params.get("session_id");
+
+function mark(done, waiting) {
+  for (const li of document.querySelectorAll("#steps li")) {
+    li.className = done.includes(li.dataset.step) ? "done" : li.dataset.step === waiting ? "wait" : "";
+  }
+}
+
+form.addEventListener("submit", e => {
+  e.preventDefault();
+  const formOut = document.getElementById("formOut");
+  busy(form, formOut, async () => {
+    const r = await call("/billing/checkout-sessions", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({product_id: form.product_id.value, customer_email: form.customer_email.value}),
+    });
+    mark(["created"], "paid");
+    formOut.innerHTML = `<p class="hint">Session created — redirecting to Stripe…</p>`;
+    location.href = r.checkout_url;
+  });
+});
+
+async function follow() {
+  mark(["created", "paid"], "webhook");
+  out.innerHTML = `<p class="placeholder">Back from Stripe. Waiting for the webhook to confirm the payment…</p>`;
+  for (let tries = 0; tries < 30; tries++) {
+    const res = await fetch(`/billing/checkout-sessions/${encodeURIComponent(sessionId)}`).catch(() => null);
+    const s = res && res.ok ? await res.json() : null;
+    if (s && s.status === "succeeded") {
+      mark(["created", "paid", "webhook", "invoice"]);
+      const pdf = `/billing/checkout-sessions/${encodeURIComponent(sessionId)}/invoice.pdf`;
+      out.innerHTML = `
+        <div class="kpis">
+          <div class="kpi"><b>${money(s.amount_cents / 100)} ${esc(s.currency.toUpperCase())}</b><span>${esc(s.product)}</span></div>
+          <div class="kpi"><b>${esc(s.invoice_number)}</b><span>Invoice</span></div>
+        </div>
+        <div class="row"><a href="${pdf}" target="_blank" rel="noopener"><button type="button">Open the PDF invoice</button></a><a href="/">Back to all projects</a></div>
+        ${raw(s, "Raw status response")}`;
+      return;
+    }
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  out.innerHTML = `<p class="err">Stripe hasn't confirmed the payment yet. It will be invoiced as soon as the webhook arrives — refresh in a moment.</p>`;
+}
+
+if (sessionId) follow();
+else if (params.has("cancelled")) {
+  mark(["created"]);
+  out.innerHTML = `<p class="err">Payment cancelled on Stripe — nothing was charged and no invoice was generated.</p>`;
+}
+</script>
+</body>
+</html>

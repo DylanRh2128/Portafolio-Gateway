@@ -6,8 +6,8 @@ A single public entry point for a backend portfolio made of independent projects
 [`AlmacenamientoCDN`](https://github.com/DylanRh2128/AlmacenamientoCDN),
 [`PasarelaPagoFacturacion`](https://github.com/DylanRh2128/PasarelaPagoFacturacion))
 is its own repo, with its own tests, docs, and Docker setup — this repo doesn't change any of
-that. It just puts an nginx reverse proxy in front of all four, routing by path, plus a small
-landing page linking to each project (and to the portfolio version of `SistemaFacturacion`, a
+that. It just puts an nginx reverse proxy in front of all four, routing by path, plus a landing
+page with a live demo page per project (`landing/`) (and to the portfolio version of `SistemaFacturacion`, a
 desktop app that can't be proxied this way).
 
 **This is a reverse proxy, not a microservices architecture** — the four backends don't call
@@ -18,6 +18,8 @@ each other. The gateway exists purely so a visitor gets one URL instead of four.
 | Path | Project |
 |---|---|
 | `/` | landing page |
+| `/expense-reports/`, `/ticket-classifier/`, `/file-storage/`, `/payments/`, `/pos/` | demo page per project (static, in `landing/`) |
+| `/demo/*` | the few API calls those pages make; nginx adds the API key server-side, 10 req/min per IP |
 | `/expenses/*` | APIAutomatizacionAI |
 | `/support/*` | BotAutomatizacionDiaria |
 | `/storage/*` | AlmacenamientoCDN |
